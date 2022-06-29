@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 using System.Numerics;
 using System.Diagnostics;
 
-namespace P4U2TrialEditor
+//
+// ANG encryption/decryption algorithms written by Geo for GeoArcSysAIOCLITool.
+// https://github.com/Geordan9/GeoArcSysAIOCLITool
+//
+namespace P4U2TrialEditor.Util
 {
     internal static class ANGUtil
     {
@@ -24,8 +28,8 @@ namespace P4U2TrialEditor
             byte key = 0x7B;
             for (int i = 0; i < src.Length; i++)
             {
-                dst[i] = (byte)((BitOperations.RotateLeft(key, 1) ^ src[i]) ^ i);
-                key = (encrypt) ? dst[i] : src[i];
+                dst[i] = (byte)(BitOperations.RotateLeft(key, 1) ^ src[i] ^ i);
+                key = encrypt ? dst[i] : src[i];
             }
         }
 
