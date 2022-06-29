@@ -1,0 +1,52 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Numerics;
+using System.Diagnostics;
+
+namespace P4U2TrialEditor
+{
+    internal static class ANGUtil
+    {
+        /// <summary>
+        /// ANG cryptography algorithm.
+        /// (Reverse engineering done by Geo)
+        /// </summary>
+        /// <param name="src">Source buffer</param>
+        /// <param name="dst">Destination buffer</param>
+        /// <param name="encrypt">Whether to encrypt/decrypt</param>
+        private static void ANGCrypt(in byte[] src, ref byte[] dst, bool encrypt)
+        {
+            Debug.Assert(src.Length == dst.Length);
+
+            byte key = 0x7B;
+            for (int i = 0; i < src.Length; i++)
+            {
+                dst[i] = (byte)((BitOperations.RotateLeft(key, 1) ^ src[i]) ^ i);
+                key = (encrypt) ? dst[i] : src[i];
+            }
+        }
+
+        /// <summary>
+        /// Encrypt data with ANG algorithm.
+        /// </summary>
+        /// <param name="src">Source buffer</param>
+        /// <param name="dst">Destination buffer</param>
+        public static void ANGEncrypt(in byte[] src, ref byte[] dst)
+        {
+            ANGCrypt(src, ref dst, true);
+        }
+
+        /// <summary>
+        /// Decrypt data with ANG algorithm.
+        /// </summary>
+        /// <param name="src">Source buffer</param>
+        /// <param name="dst">Destination buffer</param>
+        public static void ANGDecrypt(in byte[] src, ref byte[] dst)
+        {
+            ANGCrypt(src, ref dst, false);
+        }
+    }
+}
