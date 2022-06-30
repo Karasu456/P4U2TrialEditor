@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace P4U2TrialEditor.Core
+﻿namespace P4U2TrialEditor.Core
 {
     internal class Action
     {
         // Action message ID/"command"
         private string m_MsgID { get; set; }
+
         // Alternative actions (Logical OR)
         private List<Action> m_AltActions;
+
         // Action flags
         private Flag m_Flags;
 
@@ -36,7 +32,7 @@ namespace P4U2TrialEditor.Core
             m_Flags |= f;
         }
 
-        #endregion
+        #endregion Flags
 
         public enum Flag
         {
@@ -44,24 +40,34 @@ namespace P4U2TrialEditor.Core
 
             // Damage requirement
             DAMAGECOUNT = (1 << 0),
+
             // Hit count requirement
             HITCOUNT = (1 << 1),
+
             // Unknown
             FLAG_I = (1 << 2),
+
             // Unknown
             FLAG_A = (1 << 3),
+
             // Action is common
             COMMONCHAR = (1 << 4),
+
             // Show input only
             INPUTONLY = (1 << 5),
+
             // Show name only
             NAMEONLY = (1 << 6),
+
             // Unknown
             N2MISS = (1 << 7),
+
             // Unknown
             SPECIAL = (1 << 8),
+
             // Unknown
             NANDODEMO = (1 << 9),
+
             // Disallow S Hold
             NOSTYLISH = (1 << 10)
         };

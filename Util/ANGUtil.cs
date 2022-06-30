@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Diagnostics;
 using System.Numerics;
-using System.Diagnostics;
 
 //
 // ANG encryption/decryption algorithms written by Geo for GeoArcSysAIOCLITool.

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace P4U2TrialEditor.Util
+﻿namespace P4U2TrialEditor.Util
 {
     internal static class CharacterUtil
     {
@@ -68,7 +62,6 @@ namespace P4U2TrialEditor.Util
 
             _ => "XX"
         };
-
 
         /// <summary>
         /// Get character name
