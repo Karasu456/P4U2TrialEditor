@@ -6,10 +6,8 @@ namespace P4U2TrialEditor.Core
     {
         // Mission character
         private CharacterUtil.EChara m_Chara;
-
         // Mission ID
         private int m_ID;
-
         // Mission flags
         private Flag m_Flags;
 
@@ -107,12 +105,19 @@ namespace P4U2TrialEditor.Core
         // Mission actions
         private List<Action> m_ActionList;
 
+        // Trial demonstration
+        private List<Key> m_Keys;
+        // AI inputs
+        private List<Key> m_EnemyKeys;
+
         public Mission()
         {
             m_Chara = CharacterUtil.EChara.COMMON;
             m_ID = -1;
             m_Flags = Flag.NONE;
             m_ActionList = new List<Action>();
+            m_Keys = new List<Key>();
+            m_EnemyKeys = new List<Key>();
         }
 
         #region Accessors
@@ -146,46 +151,59 @@ namespace P4U2TrialEditor.Core
         /// ArcSys format is expected.
         /// </summary>
         /// <param name="script">Mission script</param>
-        /// <param name="end">End position of mission data</param>
+        /// <param name="size">Size of mission data</param>
         /// <returns>Success</returns>
-        public bool ArcSysDeserialize(string[] script, out int end)
+        public bool ArcSysDeserialize(string[] script, out int size)
         {
             int sp = 0;
 
             try
             {
                 // Find mission header
-                while (!script[sp++].StartsWith("-MISSION-"))
+                while (!script[sp].StartsWith("-MISSION-"))
                 {
+                    sp++;
                 }
 
-                // Parse mission header
-                ArcSysParseMissionHeader(script[sp++]);
-
-                // Read until action list header
-                while (!script[sp].Equals("-LIST-"))
+                // Parse mission section
+                int missionSize;
+                if (!ArcSysParseMissionSection(script, sp, out missionSize))
                 {
-                    // Parse mission flags/settings
-                    if (!ArcSysParseMissionScript(script[sp++]))
-                    {
-                        goto InvalidScript;
-                    }
+                    goto InvalidScript;
+                }
+                sp += missionSize;
+
+                // Parse action list
+                int listSize;
+                if (!ArcSysParseListSection(script, sp, out listSize))
+                {
+                    goto InvalidScript;
+                }
+                sp += listSize;
+
+                switch(script[sp])
+                {
+                    // Trial demonstration
+                    case "-KEY-":
+                        int keySize;
+                        if (!ArcSysParseKeySection(script, sp, out keySize))
+                        {
+                            goto InvalidScript;
+                        }
+                        sp += keySize;
+                        break;
+                    // Enemy input
+                    case "-EKEY-":
+                        break;
+                    // End of mission
+                    case "":
+                        break;
                 }
 
-                // Skip list header
+                // Skip header/EOM
                 sp++;
 
-                // Parse action list until KEY/EKEY header
-                while (!script[sp].EndsWith("KEY-"))
-                {
-                    if (!ArcSysParseAction(script[sp++]))
-                    {
-                        goto InvalidScript;
-                    }
-                }
-
-                // TO-DO: Parse key sections
-                end = sp;
+                size = sp;
                 return true;
             }
             catch (IndexOutOfRangeException e)
@@ -193,8 +211,45 @@ namespace P4U2TrialEditor.Core
             }
 
         InvalidScript:
-            end = sp;
+            size = sp;
             return false;
+        }
+
+        /// <summary>
+        /// Parse mission section from script.
+        /// ArcSys format is expected.
+        /// </summary>
+        /// <param name="script">Mission script</param>
+        /// <param name="sp">Script position</param>
+        /// <param name="size">Mission section size</param>
+        /// <returns></returns>
+        public bool ArcSysParseMissionSection(string[] script, int sp, out int size)
+        {
+            // Start pos
+            int start = sp;
+
+            // Parse mission header
+            if (!ArcSysParseMissionHeader(script[sp++]))
+            {
+                size = -1;
+                return false;
+            }
+
+            // Read until action list header
+            while (!script[sp].Equals("-LIST-"))
+            {
+                // Parse mission flags/settings
+                if (!ArcSysParseMissionFlag(script[sp]))
+                {
+                    size = -1;
+                    return false;
+                }
+
+                sp++;
+            }
+
+            size = sp - start;
+            return true;
         }
 
         /// <summary>
@@ -224,7 +279,7 @@ namespace P4U2TrialEditor.Core
         /// </summary>
         /// <param name="script">Mission script line</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseMissionScript(string script)
+        public bool ArcSysParseMissionFlag(string script)
         {
             int val;
             string[] tokens = script.Split("\t");
@@ -562,6 +617,36 @@ namespace P4U2TrialEditor.Core
         }
 
         /// <summary>
+        /// Parse action list from script.
+        /// ArcSys format is expected.
+        /// </summary>
+        /// <param name="script">Mission script</param>
+        /// <param name="sp">Script position</param>
+        /// <param name="size">List section size</param>
+        /// <returns>Success</returns>
+        public bool ArcSysParseListSection(string[] script, int sp, out int size)
+        {
+            // Start pos
+            int start = sp;
+
+            // Parse actions until next section (or end of mission)
+            while (script[sp][0] != '-'
+                && !script[sp].Equals(string.Empty))
+            {
+                if (!ArcSysParseAction(script[sp]))
+                {
+                    size = -1;
+                    return false;
+                }
+
+                sp++;
+            }
+
+            size = sp - start;
+            return true;
+        }
+
+        /// <summary>
         /// Parse action from tokens.
         /// ArcSys format is expected.
         /// </summary>
@@ -579,15 +664,8 @@ namespace P4U2TrialEditor.Core
             for (int i = 1; i < tokens.Length; i++)
             {
                 // Flags apply to the last action
-                Action actForFlags;
-                try
-                {
-                    actForFlags = act.GetAltActions().Last();
-                }
-                catch (InvalidOperationException e)
-                {
-                    actForFlags = act;
-                }
+                Action actForFlags = act.GetAltActions().Count != 0
+                    ? act.GetAltActions().Last() : act;
 
                 // Alternative action
                 if (tokens[i].StartsWith("|"))
@@ -664,6 +742,24 @@ namespace P4U2TrialEditor.Core
                 }
             }
 
+            m_ActionList.Add(act);
+            return true;
+        }
+
+        /// <summary>
+        /// Parse player key list from script
+        /// </summary>
+        /// <param name="script">Mission script</param>
+        /// <param name="sp">Script position</param>
+        /// <param name="size">Key section size</param>
+        /// <returns></returns>
+        public bool ArcSysParseKeySection(string[] script, int sp, out int size)
+        {
+            // Start pos
+            int start = sp;
+
+
+            size = sp - start;
             return true;
         }
 
