@@ -1,4 +1,6 @@
-﻿namespace P4U2TrialEditor.Core
+﻿using P4U2TrialEditor.Util;
+
+namespace P4U2TrialEditor.Core
 {
     internal class Action
     {
@@ -94,6 +96,17 @@
         }
 
         #endregion Flags
+
+        /// <summary>
+        /// Get action message based on its ID and the supplied character
+        /// </summary>
+        /// <param name="chara">Character</param>
+        /// <returns>Full action message</returns>
+        public string GetMessage(CharacterUtil.EChara chara)
+        {
+            string id = (string.IsNullOrEmpty(m_MsgIDOverride)) ? m_MsgID : m_MsgIDOverride;
+            return ActionUtil.GetCharaActionMsg(id, chara);
+        }
 
         public enum Flag
         {
