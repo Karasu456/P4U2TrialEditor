@@ -5,10 +5,10 @@ namespace P4U2TrialEditor.Core
     internal class Mission
     {
         // Mission character
-        private CharacterUtil.EChara m_Chara { get; set; }
+        private CharacterUtil.EChara m_Chara;
 
         // Mission ID
-        private int m_ID { get; set; }
+        private int m_ID;
 
         // Mission flags
         private Flag m_Flags;
@@ -115,9 +115,35 @@ namespace P4U2TrialEditor.Core
             m_ActionList = new List<Action>();
         }
 
+        #region Accessors
+
+        public CharacterUtil.EChara GetCharacter()
+        {
+            return m_Chara;
+        }
+
+        public void SetCharacter(CharacterUtil.EChara chara)
+        {
+            m_Chara = chara;
+        }
+
+        public int GetID()
+        {
+            return m_ID;
+        }
+
+        public void SetID(int id)
+        {
+            m_ID = id;
+        }
+
+        #endregion Accessors
+
+        #region Arc Sys format
+
         /// <summary>
         /// Deserialize mission from text form.
-        /// Format is expected to be ArcSys
+        /// ArcSys format is expected.
         /// </summary>
         /// <param name="script">Mission script</param>
         /// <param name="end">End position of mission data</param>
@@ -125,202 +151,523 @@ namespace P4U2TrialEditor.Core
         public bool ArcSysDeserialize(string[] script, out int end)
         {
             int sp = 0;
-            string[] tokens;
 
             try
             {
-                for (; sp < script.Length;)
+                // Find mission header
+                while (!script[sp++].StartsWith("-MISSION-"))
                 {
-                    // Find mission header
-                    while (!script[sp++].StartsWith("-MISSION-"))
-                    {
-                    }
+                }
 
-                    // Parse mission header
-                    int id;
-                    tokens = script[sp++].Split("\t");
-                    if (tokens.Length != 2
-                        || !int.TryParse(tokens[1], out id))
+                // Parse mission header
+                ArcSysParseMissionHeader(script[sp++]);
+
+                // Read until action list header
+                while (!script[sp].Equals("-LIST-"))
+                {
+                    // Parse mission flags/settings
+                    if (!ArcSysParseMissionScript(script[sp++]))
                     {
                         goto InvalidScript;
                     }
-                    m_ID = id;
+                }
 
-                    // Read until action list header
-                    while (!script[sp].Equals("-LIST-"))
+                // Skip list header
+                sp++;
+
+                // Parse action list until KEY/EKEY header
+                while (!script[sp].EndsWith("KEY-"))
+                {
+                    if (!ArcSysParseAction(script[sp++]))
                     {
-                        // Parse mission flags/settings
-                        tokens = script[sp++].Split("\t");
-
-                        switch (tokens[0])
-                        {
-                            // Spawn
-                            case "Tooi":
-                                m_Flags |= Flag.SPAWN_FAR;
-                                break;
-
-                            case "Hashi":
-                                m_Flags |= Flag.SPAWN_SIDE;
-                                break;
-
-                            case "HashiEx":
-                                m_Flags |= Flag.SPAWN_CORNER;
-                                break;
-
-                            // Player
-                            case "Kakusei":
-                                m_Flags |= Flag.PLAYER_AWAKENING;
-                                break;
-
-                            case "Ichigeki":
-                                m_Flags |= Flag.PLAYER_IK_AVAIL;
-                                break;
-
-                            // Enemy
-                            case "Jump":
-                                m_Flags |= Flag.ENEMY_JUMP;
-                                break;
-
-                            case "Attack":
-                                m_Flags |= Flag.ENEMY_ATTACK;
-                                break;
-
-                            case "Crouch":
-                                m_Flags |= Flag.ENEMY_CROUCH;
-                                break;
-
-                            case "EnemyKyofu":
-                                m_Flags |= Flag.ENEMY_FEAR;
-                                break;
-
-                            case "HPRecoverEnemyOnly":
-                                m_Flags |= Flag.ENEMY_HP_RECOVER;
-                                break;
-
-                            // Ailment
-                            case "Konran":
-                                m_Flags |= Flag.AILMENT_PANIC;
-                                break;
-
-                            case "Kanden":
-                                m_Flags |= Flag.AILMENT_SHOCK;
-                                break;
-
-                            case "PersonaBreak":
-                                m_Flags |= Flag.AILMENT_BREAK;
-                                break;
-
-                            // Global
-                            case "SPMax":
-                                m_Flags |= Flag.GLOBAL_SP_MAX;
-                                break;
-
-                            case "HPRecover":
-                                m_Flags |= Flag.GLOBAL_HP_RECOVER;
-                                break;
-
-                            case "HeatUpForever":
-                                m_Flags |= Flag.GLOBAL_ALWAYS_FRENZY;
-                                break;
-
-                            case "NoMiss":
-                                m_Flags |= Flag.GLOBAL_NO_MISS;
-                                break;
-
-                            case "ForceNoDamageMiss":
-                                m_Flags |= Flag.GLOBAL_NO_DMG_MISS;
-                                break;
-
-                            case "Counter":
-                                m_Flags |= Flag.GLOBAL_CH_START;
-                                break;
-
-                            case "CounterND":
-                                m_Flags |= Flag.GLOBAL_CH_START_ND;
-                                break;
-
-                            case "Junhudo":
-                                m_Flags |= Flag.GLOBAL_ALL_MOVES;
-                                break;
-
-                            // Mission variables
-                            case "HP":
-                                int hp;
-                                if (!int.TryParse(tokens[1], out hp))
-                                {
-                                    goto InvalidScript;
-                                }
-                                m_HP = hp;
-                                break;
-
-                            case "SP":
-                                int _sp;
-                                if (!int.TryParse(tokens[1], out _sp))
-                                {
-                                    goto InvalidScript;
-                                }
-                                m_SP = _sp;
-                                break;
-
-                            case "Burst":
-                                int burst;
-                                if (!int.TryParse(tokens[1], out burst))
-                                {
-                                    goto InvalidScript;
-                                }
-                                m_Burst = burst;
-                                break;
-
-                            case "ChiesCharge":
-                                int powerCharge;
-                                if (!int.TryParse(tokens[1], out powerCharge))
-                                {
-                                    goto InvalidScript;
-                                }
-                                m_CE_PowerCharge = powerCharge;
-                                break;
-                            //YosukesSukukaja
-                            //YukikosFireBooster
-                            //YukikosFireGuardKill
-                            //NaotosFate
-                            //KumasItem
-                            //KumasItemFix
-                            //KumasItem2
-                            //KumasItem2Fix
-                            //KumasSPItemFastRecover
-                            //AkihikosThunder
-                            //AegissOrgia
-                            //AegissBulletsMax
-                            //AegissBulletsRecover
-                            //LabryssAxInitial
-                            //ShadowLabryssProgramFastRecover
-                            //JunpeisPoint
-                            //JunpeisFullCount
-                            //JunpeisOtakebi
-                            //RisesMarking
-                            //RisesTetraFastRecover
-                            //RisesBitFastRecover
-                            //KorosHP
-                            //AdachisHeat
-                            //AdachisYodomi
-                            //MariesOtenki
-
-                            // Invalid token
-                            default:
-                                break;
-                        }
+                        goto InvalidScript;
                     }
                 }
+
+                // TO-DO: Parse key sections
+                end = sp;
+                return true;
             }
             catch (IndexOutOfRangeException e)
             {
             }
 
-        // Script is invalid
         InvalidScript:
             end = sp;
             return false;
         }
+
+        /// <summary>
+        /// Parse mission header.
+        /// ArcSys format is expected.
+        /// </summary>
+        /// <param name="header">Mission header</param>
+        /// <returns>Success</returns>
+        public bool ArcSysParseMissionHeader(string header)
+        {
+            int id;
+            string[] tokens = header.Split("\t");
+
+            if (tokens.Length != 2
+                || !int.TryParse(tokens[1], out id))
+            {
+                return false;
+            }
+
+            m_ID = id;
+            return true;
+        }
+
+        /// <summary>
+        /// Parse mission flag/setting from tokens.
+        /// ArcSys format is expected.
+        /// </summary>
+        /// <param name="script">Mission script line</param>
+        /// <returns>Success</returns>
+        public bool ArcSysParseMissionScript(string script)
+        {
+            int val;
+            string[] tokens = script.Split("\t");
+
+            switch (tokens[0])
+            {
+                // Spawn
+                case "Tooi":
+                    m_Flags |= Flag.SPAWN_FAR;
+                    break;
+
+                case "Hashi":
+                    m_Flags |= Flag.SPAWN_SIDE;
+                    break;
+
+                case "HashiEx":
+                    m_Flags |= Flag.SPAWN_CORNER;
+                    break;
+
+                // Player
+                case "Kakusei":
+                    m_Flags |= Flag.PLAYER_AWAKENING;
+                    break;
+
+                case "Ichigeki":
+                    m_Flags |= Flag.PLAYER_IK_AVAIL;
+                    break;
+
+                // Enemy
+                case "Jump":
+                    m_Flags |= Flag.ENEMY_JUMP;
+                    break;
+
+                case "Attack":
+                    m_Flags |= Flag.ENEMY_ATTACK;
+                    break;
+
+                case "Crouch":
+                    m_Flags |= Flag.ENEMY_CROUCH;
+                    break;
+
+                case "EnemyKyofu":
+                    m_Flags |= Flag.ENEMY_FEAR;
+                    break;
+
+                case "HPRecoverEnemyOnly":
+                    m_Flags |= Flag.ENEMY_HP_RECOVER;
+                    break;
+
+                // Ailment
+                case "Konran":
+                    m_Flags |= Flag.AILMENT_PANIC;
+                    break;
+
+                case "Kanden":
+                    m_Flags |= Flag.AILMENT_SHOCK;
+                    break;
+
+                case "PersonaBreak":
+                    m_Flags |= Flag.AILMENT_BREAK;
+                    break;
+
+                // Global
+                case "SPMax":
+                    m_Flags |= Flag.GLOBAL_SP_MAX;
+                    break;
+
+                case "HPRecover":
+                    m_Flags |= Flag.GLOBAL_HP_RECOVER;
+                    break;
+
+                case "HeatUpForever":
+                    m_Flags |= Flag.GLOBAL_ALWAYS_FRENZY;
+                    break;
+
+                case "NoMiss":
+                    m_Flags |= Flag.GLOBAL_NO_MISS;
+                    break;
+
+                case "ForceNoDamageMiss":
+                    m_Flags |= Flag.GLOBAL_NO_DMG_MISS;
+                    break;
+
+                case "Counter":
+                    m_Flags |= Flag.GLOBAL_CH_START;
+                    break;
+
+                case "CounterND":
+                    m_Flags |= Flag.GLOBAL_CH_START_ND;
+                    break;
+
+                case "Junhudo":
+                    m_Flags |= Flag.GLOBAL_ALL_MOVES;
+                    break;
+
+                // Mission variables
+                case "HP":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_HP = Math.Max(val, 0);
+                    break;
+
+                case "SP":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_SP = Math.Max(val, 0);
+                    break;
+
+                case "Burst":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_Burst = Math.Max(val, 0);
+                    break;
+
+                case "ChiesCharge":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_CE_PowerCharge = Math.Max(val, 0);
+                    break;
+
+                case "YosukesSukukaja":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_YO_Sukukaja = Math.Max(val, 0);
+                    break;
+
+                case "YukikosFireBooster":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_YU_FireCounter = Math.Max(val, 0);
+                    break;
+
+                case "YukikosFireGuardKill":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_YU_FireBreak = Math.Max(val, 0);
+                    break;
+
+                case "NaotosFate":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_NA_Fate = Math.Max(val, 0);
+                    break;
+
+                case "KumasItem":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_KU_Item = Math.Max(val, 0);
+                    break;
+
+                case "KumasItemFix":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_KU_ItemFix = Math.Max(val, 0);
+                    break;
+
+                case "KumasItem2":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_KU_Item2 = Math.Max(val, 0);
+                    break;
+
+                case "KumasItem2Fix":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_KU_Item2Fix = Math.Max(val, 0);
+                    break;
+
+                case "KumasSPItemFastRecover":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_KU_SPItemFastRecover = Math.Max(val, 0);
+                    break;
+
+                case "AkihikosThunder":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_AK_Thunder = Math.Max(val, 0);
+                    break;
+
+                case "AegissOrgia":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_AG_Orgia = Math.Max(val, 0);
+                    break;
+
+                case "AegissBulletsMax":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_AG_BulletsMax = Math.Max(val, 0);
+                    break;
+
+                case "AegissBulletsRecover":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_AG_BulletsRecover = Math.Max(val, 0);
+                    break;
+
+                case "LabryssAxInitial":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_LA_AxInitial = Math.Max(val, 0);
+                    break;
+
+                case "ShadowLabryssProgramFastRecover":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_LS_ProgramFastRecover = Math.Max(val, 0);
+                    break;
+
+                case "JunpeisPoint":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_JU_Point = Math.Max(val, 0);
+                    break;
+
+                case "JunpeisFullCount":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_JU_FullCount = Math.Max(val, 0);
+                    break;
+
+                case "JunpeisOtakebi":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_JU_Otakebi = Math.Max(val, 0);
+                    break;
+
+                case "RisesMarking":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_RI_Marking = Math.Max(val, 0);
+                    break;
+
+                case "RisesTetraFastRecover":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_RI_TetraFastRecover = Math.Max(val, 0);
+                    break;
+
+                case "RisesBitFastRecover":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_RI_BitFastRecover = Math.Max(val, 0);
+                    break;
+
+                case "KorosHP":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_AM_KoroHP = Math.Max(val, 0);
+                    break;
+
+                case "AdachisHeat":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_AD_Heat = Math.Max(val, 0);
+                    break;
+
+                case "AdachisYodomi":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_AD_Yodomi = Math.Max(val, 0);
+                    break;
+
+                case "MariesOtenki":
+                    if (!int.TryParse(tokens[1], out val))
+                    {
+                        return false;
+                    }
+                    m_MR_Weather = Math.Max(val, 0);
+                    break;
+
+                // Invalid token
+                default:
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Parse action from tokens.
+        /// ArcSys format is expected.
+        /// </summary>
+        /// <param name="action">Action</param>
+        /// <returns>Success</returns>
+        public bool ArcSysParseAction(string action)
+        {
+            Action act = new Action();
+            string[] tokens = action.Split("\t");
+
+            // Initial action
+            act.SetMsgID(tokens[0]);
+
+            // Extra tokens
+            for (int i = 1; i < tokens.Length; i++)
+            {
+                // Flags apply to the last action
+                Action actForFlags;
+                try
+                {
+                    actForFlags = act.GetAltActions().Last();
+                }
+                catch (InvalidOperationException e)
+                {
+                    actForFlags = act;
+                }
+
+                // Alternative action
+                if (tokens[i].StartsWith("|"))
+                {
+                    Action alt = new Action();
+                    alt.SetMsgID(tokens[i].Substring(1));
+                    act.AppendAltAction(alt);
+                }
+                // Action name override
+                else if (tokens[i].StartsWith("+"))
+                {
+                    act.SetMsgIDOverride(tokens[i].Substring(1));
+                }
+                // Damage requirement
+                else if (tokens[i].StartsWith("d"))
+                {
+                    int dmg;
+                    if (!int.TryParse(tokens[i].Substring(1), out dmg))
+                    {
+                        return false;
+                    }
+                    actForFlags.SetFlag(Action.Flag.DAMAGECOUNT);
+                    actForFlags.SetDamageRequirement(dmg);
+                }
+                // Hit count requirement
+                else if (tokens[i].StartsWith("h"))
+                {
+                    int hits;
+                    if (!int.TryParse(tokens[i].Substring(1), out hits))
+                    {
+                        return false;
+                    }
+                    actForFlags.SetFlag(Action.Flag.HITCOUNT);
+                    actForFlags.SetHitsRequirement(hits);
+                }
+                else
+                {
+                    switch(tokens[i])
+                    {
+                        case "i":
+                            actForFlags.SetFlag(Action.Flag.FLAG_I);
+                            break;
+                        case "a":
+                            actForFlags.SetFlag(Action.Flag.FLAG_A);
+                            break;
+                        case "p":
+                            actForFlags.SetFlag(Action.Flag.FLAG_P);
+                            break;
+                        case "c":
+                            actForFlags.SetFlag(Action.Flag.COMMONCHAR);
+                            break;
+                        case "iOnly":
+                            actForFlags.SetFlag(Action.Flag.INPUTONLY);
+                            break;
+                        case "nOnly":
+                            actForFlags.SetFlag(Action.Flag.NAMEONLY);
+                            break;
+                        case "n2miss":
+                            actForFlags.SetFlag(Action.Flag.N2MISS);
+                            break;
+                        case "Special":
+                            actForFlags.SetFlag(Action.Flag.SPECIAL);
+                            break;
+                        case "Nandodemo":
+                            actForFlags.SetFlag(Action.Flag.NANDODEMO);
+                            break;
+                        case "nostylish":
+                            actForFlags.SetFlag(Action.Flag.NOSTYLISH);
+                            break;
+                        // Unknown token
+                        default:
+                            return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        #endregion Arc Sys format
 
         #region Flags
 
