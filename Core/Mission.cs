@@ -1,4 +1,5 @@
-﻿using P4U2TrialEditor.Util;
+﻿using System.Diagnostics;
+using P4U2TrialEditor.Util;
 
 namespace P4U2TrialEditor.Core
 {
@@ -151,11 +152,13 @@ namespace P4U2TrialEditor.Core
         /// ArcSys format is expected.
         /// </summary>
         /// <param name="script">Mission script</param>
+        /// <param name="sp">Script position</param>
         /// <param name="size">Size of mission data</param>
         /// <returns>Success</returns>
-        public bool ArcSysDeserialize(string[] script, out int size)
+        public bool ArcSysDeserialize(string[] script, int sp, out int size)
         {
-            int sp = 0;
+            // Start pos
+            int start = sp;
 
             try
             {
@@ -169,7 +172,8 @@ namespace P4U2TrialEditor.Core
                 int missionSize;
                 if (!ArcSysParseMissionSection(script, sp, out missionSize))
                 {
-                    goto InvalidScript;
+                    size = -1;
+                    return false;
                 }
                 sp += missionSize;
 
@@ -177,7 +181,8 @@ namespace P4U2TrialEditor.Core
                 int listSize;
                 if (!ArcSysParseListSection(script, sp, out listSize))
                 {
-                    goto InvalidScript;
+                    size = -1;
+                    return false;
                 }
                 sp += listSize;
 
@@ -188,30 +193,37 @@ namespace P4U2TrialEditor.Core
                         int keySize;
                         if (!ArcSysParseKeySection(script, sp, out keySize))
                         {
-                            goto InvalidScript;
+                            size = -1;
+                            return false;
                         }
                         sp += keySize;
                         break;
                     // Enemy input
                     case "-EKEY-":
+                        int enemyKeySize;
+                        if (!ArcSysParseEnemyKeySection(script, sp, out enemyKeySize))
+                        {
+                            size = -1;
+                            return false;
+                        }
+                        sp += enemyKeySize;
                         break;
                     // End of mission
                     case "":
                         break;
+                    default:
+                        Debug.Assert(false, "Unknown delimiter/section");
+                        break;
                 }
 
-                // Skip header/EOM
-                sp++;
-
-                size = sp;
+                size = sp - start;
                 return true;
             }
             catch (IndexOutOfRangeException e)
             {
             }
 
-        InvalidScript:
-            size = sp;
+            size = -1;
             return false;
         }
 
@@ -225,6 +237,8 @@ namespace P4U2TrialEditor.Core
         /// <returns></returns>
         public bool ArcSysParseMissionSection(string[] script, int sp, out int size)
         {
+            Debug.Assert(sp < script.Length);
+
             // Start pos
             int start = sp;
 
@@ -239,13 +253,12 @@ namespace P4U2TrialEditor.Core
             while (!script[sp].Equals("-LIST-"))
             {
                 // Parse mission flags/settings
-                if (!ArcSysParseMissionFlag(script[sp]))
+                if (!ArcSysParseMissionFlag(script[sp++])
+                    || sp >= script.Length)
                 {
                     size = -1;
                     return false;
                 }
-
-                sp++;
             }
 
             size = sp - start;
@@ -260,6 +273,12 @@ namespace P4U2TrialEditor.Core
         /// <returns>Success</returns>
         public bool ArcSysParseMissionHeader(string header)
         {
+            // Validate section header
+            if (!header.StartsWith("-MISSION-"))
+            {
+                return false;
+            }
+
             int id;
             string[] tokens = header.Split("\t");
 
@@ -610,6 +629,7 @@ namespace P4U2TrialEditor.Core
 
                 // Invalid token
                 default:
+                    Debug.Assert(false, "Invalid token");
                     return false;
             }
 
@@ -626,20 +646,28 @@ namespace P4U2TrialEditor.Core
         /// <returns>Success</returns>
         public bool ArcSysParseListSection(string[] script, int sp, out int size)
         {
+            Debug.Assert(sp < script.Length);
+
             // Start pos
             int start = sp;
 
-            // Parse actions until next section (or end of mission)
-            while (script[sp][0] != '-'
-                && !script[sp].Equals(string.Empty))
+            // Validate section header
+            if (script[sp++] != "-LIST-")
             {
-                if (!ArcSysParseAction(script[sp]))
+                size = -1;
+                return false;
+            }
+
+            // Parse actions until next section (or end of mission)
+            while (!script[sp].Equals(string.Empty)
+                && script[sp][0] != '-')
+            {
+                if (!ArcSysParseAction(script[sp])
+                    || ++sp >= script.Length)
                 {
                     size = -1;
                     return false;
                 }
-
-                sp++;
             }
 
             size = sp - start;
@@ -752,14 +780,138 @@ namespace P4U2TrialEditor.Core
         /// <param name="script">Mission script</param>
         /// <param name="sp">Script position</param>
         /// <param name="size">Key section size</param>
-        /// <returns></returns>
+        /// <returns>Success</returns>
         public bool ArcSysParseKeySection(string[] script, int sp, out int size)
         {
+            Debug.Assert(sp < script.Length);
+
             // Start pos
             int start = sp;
 
+            if (script[sp++] != "-KEY-")
+            {
+                size = -1;
+                return false;
+            }
+
+            // Parse actions until next section (or end of mission)
+            while (!script[sp].Equals(string.Empty)
+                && script[sp][0] != '-')
+            {
+                if (!ArcSysParseKey(script[sp], Key.Type.PLAYER)
+                    || ++sp >= script.Length)
+                {
+                    size = -1;
+                    return false;
+                }
+            }
 
             size = sp - start;
+            return true;
+        }
+
+        /// <summary>
+        /// Parse enemy key list from script
+        /// </summary>
+        /// <param name="script">Mission script</param>
+        /// <param name="sp">Script position</param>
+        /// <param name="size">Key section size</param>
+        /// <returns>Success</returns>
+        public bool ArcSysParseEnemyKeySection(string[] script, int sp, out int size)
+        {
+            Debug.Assert(sp < script.Length);
+
+            // Start pos
+            int start = sp;
+
+            // Validate section header
+            if (script[sp++] != "-EKEY-")
+            {
+                size = -1;
+                return false;
+            }
+
+            // Parse actions until next section (or end of mission)
+            while (!script[sp].Equals(string.Empty)
+                && script[sp][0] != '-')
+            {
+                if (!ArcSysParseKey(script[sp], Key.Type.ENEMY)
+                    || ++sp >= script.Length)
+                {
+                    size = -1;
+                    return false;
+                }
+            }
+
+            size = sp - start;
+            return true;
+        }
+
+        /// <summary>
+        /// Parse key input from tokens
+        /// </summary>
+        /// <param name="key">Key</param>
+        /// <param name="type">Key type (KEY/EKEY)</param>
+        /// <returns>Success</returns>
+        public bool ArcSysParseKey(string key, Key.Type type)
+        {
+            Key k = new Key();
+            string[] tokens = key.Split("\t");
+
+            if (tokens.Length != 3)
+            {
+                Debug.Assert(false, "Invalid key input");
+                return false;
+            }
+
+            // Stick input + key duration
+            int stick, duration;
+            if (!int.TryParse(tokens[0], out stick)
+                || !int.TryParse(tokens[2], out duration))
+            {
+                return false;
+            }
+            k.SetStick(stick);
+            k.SetDuration(duration);
+
+            // Key buttons
+            foreach (char btn in tokens[1])
+            {
+                switch(btn)
+                {
+                    case 'A':
+                        k.SetButton(Key.Button.A);
+                        break;
+                    case 'B':
+                        k.SetButton(Key.Button.B);
+                        break;
+                    case 'C':
+                        k.SetButton(Key.Button.C);
+                        break;
+                    case 'D':
+                        k.SetButton(Key.Button.D);
+                        break;
+                    case '-':
+                        break;
+                    default:
+                        Debug.Assert(false, "Invalid key");
+                        break;
+                }
+            }
+
+            switch(type)
+            {
+                case Key.Type.PLAYER:
+                    m_Keys.Add(k);
+                    break;
+                case Key.Type.ENEMY:
+                    m_EnemyKeys.Add(k);
+                    break;
+                default:
+                    Debug.Assert(false);
+                    break;
+            }
+
             return true;
         }
 

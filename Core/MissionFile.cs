@@ -57,29 +57,27 @@ namespace P4U2TrialEditor.Core
                 {
                     sp++;
                 }
-
                 // Skip header
                 sp++;
 
                 // Parse lessons
                 while (!script[sp].StartsWith("----Char----"))
                 {
+                    // Parse mission
                     Mission lesson = new Mission();
-
-                    // Mission script
-                    int missionSize = script.Length - sp;
-                    string[] missionScript = new string[missionSize];
-                    Array.Copy(script, sp, missionScript, 0, missionSize);
-
-                    if (!lesson.ArcSysDeserialize(missionScript, out size))
+                    if (!lesson.ArcSysDeserialize(script, sp, out size))
                     {
                         return false;
                     }
 
                     m_Lessons.Add(lesson);
+                    sp += size;
 
-                    // Point script index to end of mission data
-                    sp = sp + size;
+                    // Skip post-mission whitespace
+                    while (script[sp].Equals(string.Empty))
+                    {
+                        sp++;
+                    }
                 }
 
                 // TO-DO: Parse trials

@@ -18,7 +18,7 @@ namespace P4U2TrialEditor.Core
         public Key()
         {
             m_Stick = 5;
-            m_Buttons = Button.BTN_NONE;
+            m_Buttons = Button.NONE;
             m_Duration = 1;
         }
 
@@ -48,12 +48,18 @@ namespace P4U2TrialEditor.Core
 
         public enum Button
         {
-            BTN_NONE = 0,
+            NONE = 0,
 
-            BTN_A = (1 << 0),
-            BTN_B = (1 << 1),
-            BTN_C = (1 << 2),
-            BTN_D = (1 << 3)
+            A = (1 << 0),
+            B = (1 << 1),
+            C = (1 << 2),
+            D = (1 << 3)
+        };
+
+        public enum Type
+        {
+            PLAYER,
+            ENEMY
         };
     }
 }
