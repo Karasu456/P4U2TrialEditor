@@ -31,7 +31,7 @@
         };
 
         /// <summary>
-        /// Get character resource ID
+        /// Convert character enum to resource ID
         /// </summary>
         /// <param name="chara">Character</param>
         /// <returns>ID string</returns>
@@ -64,7 +64,7 @@
         };
 
         /// <summary>
-        /// Get character name
+        /// Convert character enum to name
         /// </summary>
         /// <param name="chara">Character</param>
         /// <returns>ID string</returns>
@@ -94,6 +94,39 @@
             EChara.YUKIKO => "Yukiko",
 
             _ => "Unknown"
+        };
+
+        /// <summary>
+        /// Convert character resource ID to enum value
+        /// </summary>
+        /// <param name="resID"></param>
+        /// <returns></returns>
+        public static EChara GetCharaEnum(string resID) => resID switch
+        {
+            "AD" => EChara.ADACHI,
+            "AG" => EChara.AIGIS,
+            "AK" => EChara.AKIHIKO,
+            "CE" => EChara.CHIE,
+            "EL" => EChara.ELIZABETH,
+            "JU" => EChara.JUNPEI,
+            "KA" => EChara.KANJI,
+            "AM" => EChara.KEN,
+            "LA" => EChara.LABRYS,
+            "NX" => EChara.MARGARET,
+            "MR" => EChara.MARIE,
+            "NB" => EChara.MINAZUKI,
+            "MI" => EChara.MITSURU,
+            "NA" => EChara.NAOTO,
+            "BC" => EChara.NARUKAMI,
+            "RI" => EChara.RISE,
+            "LS" => EChara.S_LABRYS,
+            "NO" => EChara.SHO,
+            "KU" => EChara.TEDDIE,
+            "YO" => EChara.YOSUKE,
+            "YK" => EChara.YUKARI,
+            "YU" => EChara.YUKIKO,
+
+            _ => EChara.COMMON
         };
     }
 }

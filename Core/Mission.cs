@@ -208,11 +208,10 @@ namespace P4U2TrialEditor.Core
                         }
                         sp += enemyKeySize;
                         break;
-                    // End of mission
+                    // End of mission/unknown delimiter
+                    // Sometimes the devs forgot to separate missions with newlines :)
                     case "":
-                        break;
                     default:
-                        Debug.Assert(false, "Unknown delimiter/section");
                         break;
                 }
 

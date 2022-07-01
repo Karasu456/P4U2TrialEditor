@@ -15,6 +15,13 @@ namespace P4U2TrialEditor.Core
         {
             m_Lessons = new List<Mission>();
             m_Trials = new Dictionary<CharacterUtil.EChara, List<Mission>>();
+
+            // Initialize dictionary
+            foreach (CharacterUtil.EChara chara
+                in Enum.GetValues(typeof(CharacterUtil.EChara)))
+            {
+                m_Trials.Add(chara, new List<Mission>());
+            }
         }
 
         /// <summary>
@@ -66,7 +73,13 @@ namespace P4U2TrialEditor.Core
                 }
                 sp += lessonSize;
 
-                // TO-DO: Parse trials
+                int trialsSize;
+                if (!ArcSysParseTrials(script, sp, out trialsSize))
+                {
+                    return false;
+                }
+                sp += trialsSize;
+
                 return true;
             }
             catch (IndexOutOfRangeException)
@@ -100,12 +113,12 @@ namespace P4U2TrialEditor.Core
             // Parse lessons until trial header (or EOF)
             while (!script[sp].StartsWith("----Char----"))
             {
-                // Parse mission
                 Mission lesson = new Mission();
                 if (!lesson.ArcSysDeserialize(script, sp, out size))
                 {
                     return false;
                 }
+
                 m_Lessons.Add(lesson);
                 sp += size;
 
@@ -114,10 +127,107 @@ namespace P4U2TrialEditor.Core
                     break;
                 }
 
-                // Skip post-mission whitespace
+                // Skip post-lesson whitespace
                 while (script[sp] == string.Empty
                     && ++sp < script.Length)
                 {
+                }
+            }
+
+            size = sp - start;
+            return true;
+        }
+
+        /// <summary>
+        /// Parse trials from mission file
+        /// </summary>
+        /// <param name="script">Mission script</param>
+        /// <param name="sp">Script position</param>
+        /// <param name="size">Trials size</param>
+        /// <returns></returns>
+        public bool ArcSysParseTrials(string[] script, int sp, out int size)
+        {
+            Debug.Assert(sp < script.Length);
+
+            // Start pos
+            int start = sp;
+
+            // Validate section header
+            string[] tokens = script[sp].Split("\t");
+            if (tokens.Length != 2
+                || tokens[0] != "----Char----")
+            {
+                size = -1;
+                return false;
+            }
+
+            while (sp < script.Length
+                && script[sp].StartsWith("----Char----"))
+            {
+                int charSize;
+                if (!ArcSysParseCharSection(script, sp, out charSize))
+                {
+                    size = -1;
+                    return false;
+                }
+                sp += charSize;
+
+                // Skip post-trial whitespace
+                while (script[sp] == string.Empty
+                    && ++sp < script.Length)
+                {
+                }
+            }
+
+            size = sp - start;
+            return true;
+        }
+
+        /// <summary>
+        /// Parse char section of mission file
+        /// </summary>
+        /// <param name="script">Mission script</param>
+        /// <param name="sp">Script position</param>
+        /// <param name="size">Char section size</param>
+        /// <returns></returns>
+        public bool ArcSysParseCharSection(string[] script, int sp, out int size)
+        {
+            Debug.Assert(sp < script.Length);
+
+            // Start pos
+            int start = sp;
+
+            // Validate section header
+            string[] tokens = script[sp++].Split("\t");
+            if (tokens.Length != 2
+                || tokens[0] != "----Char----")
+            {
+                size = -1;
+                return false;
+            }
+
+            // Character for trials
+            CharacterUtil.EChara chara
+                = CharacterUtil.GetCharaEnum(tokens[1]);
+            Debug.Assert(chara != CharacterUtil.EChara.COMMON);
+
+            // Parse trials until next char header (or EOF)
+            while (!script[sp].StartsWith("----Char----"))
+            {
+                Mission trial = new Mission();
+                if (!trial.ArcSysDeserialize(script, sp, out size))
+                {
+                    size = -1;
+                    return false;
+                }
+
+                trial.SetCharacter(chara);
+                m_Trials[chara].Add(trial);
+                sp += size;
+
+                if (sp > script.Length)
+                {
+                    break;
                 }
             }
 
