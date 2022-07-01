@@ -7,7 +7,6 @@ namespace P4U2TrialEditor.Core
     {
         // Lesson Mode missions
         private List<Mission> m_Lessons;
-
         // Challenge Mode missions
         private Dictionary<CharacterUtil.EChara, List<Mission>> m_Trials;
 
@@ -155,7 +154,7 @@ namespace P4U2TrialEditor.Core
             int start = sp;
 
             // Validate section header
-            string[] tokens = script[sp].Split("\t");
+            string[] tokens = script[sp].Split();
             if (tokens.Length != 2
                 || tokens[0] != "----Char----")
             {
@@ -200,7 +199,7 @@ namespace P4U2TrialEditor.Core
             int start = sp;
 
             // Validate section header
-            string[] tokens = script[sp++].Split("\t");
+            string[] tokens = script[sp++].Split();
             if (tokens.Length != 2
                 || tokens[0] != "----Char----")
             {

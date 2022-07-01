@@ -6,7 +6,6 @@ namespace P4U2TrialEditor.Core
     {
         // Action message ID/"command"
         private string m_MsgID;
-
         // Action message can be overridden with "+"
         private string m_MsgIDOverride;
 
@@ -18,7 +17,6 @@ namespace P4U2TrialEditor.Core
 
         // Damage requirement
         private int m_NumDmg = -1;
-
         // Hit count requirement
         private int m_NumHits = -1;
 

@@ -215,6 +215,12 @@ namespace P4U2TrialEditor.Core
                         break;
                 }
 
+                // Skip trailing whitespace
+                while (script[sp] == string.Empty
+                    && ++sp < script.Length)
+                {
+                }
+
                 size = sp - start;
                 return true;
             }
@@ -279,7 +285,7 @@ namespace P4U2TrialEditor.Core
             }
 
             int id;
-            string[] tokens = header.Split("\t");
+            string[] tokens = header.Split();
 
             if (tokens.Length != 2
                 || !int.TryParse(tokens[1], out id))
@@ -308,7 +314,7 @@ namespace P4U2TrialEditor.Core
             }
 
             int val;
-            string[] tokens = script.Split("\t");
+            string[] tokens = script.Split();
 
             switch (tokens[0])
             {
@@ -316,11 +322,9 @@ namespace P4U2TrialEditor.Core
                 case "Tooi":
                     m_Flags |= Flag.SPAWN_FAR;
                     break;
-
                 case "Hashi":
                     m_Flags |= Flag.SPAWN_SIDE;
                     break;
-
                 case "HashiEx":
                     m_Flags |= Flag.SPAWN_CORNER;
                     break;
@@ -329,7 +333,6 @@ namespace P4U2TrialEditor.Core
                 case "Kakusei":
                     m_Flags |= Flag.PLAYER_AWAKENING;
                     break;
-
                 case "Ichigeki":
                     m_Flags |= Flag.PLAYER_IK_AVAIL;
                     break;
@@ -338,19 +341,15 @@ namespace P4U2TrialEditor.Core
                 case "Jump":
                     m_Flags |= Flag.ENEMY_JUMP;
                     break;
-
                 case "Attack":
                     m_Flags |= Flag.ENEMY_ATTACK;
                     break;
-
                 case "Crouch":
                     m_Flags |= Flag.ENEMY_CROUCH;
                     break;
-
                 case "EnemyKyofu":
                     m_Flags |= Flag.ENEMY_FEAR;
                     break;
-
                 case "HPRecoverEnemyOnly":
                     m_Flags |= Flag.ENEMY_HP_RECOVER;
                     break;
@@ -359,11 +358,9 @@ namespace P4U2TrialEditor.Core
                 case "Konran":
                     m_Flags |= Flag.AILMENT_PANIC;
                     break;
-
                 case "Kanden":
                     m_Flags |= Flag.AILMENT_SHOCK;
                     break;
-
                 case "PersonaBreak":
                     m_Flags |= Flag.AILMENT_BREAK;
                     break;
@@ -372,31 +369,24 @@ namespace P4U2TrialEditor.Core
                 case "SPMax":
                     m_Flags |= Flag.GLOBAL_SP_MAX;
                     break;
-
                 case "HPRecover":
                     m_Flags |= Flag.GLOBAL_HP_RECOVER;
                     break;
-
                 case "HeatUpForever":
                     m_Flags |= Flag.GLOBAL_ALWAYS_FRENZY;
                     break;
-
                 case "NoMiss":
                     m_Flags |= Flag.GLOBAL_NO_MISS;
                     break;
-
                 case "ForceNoDamageMiss":
                     m_Flags |= Flag.GLOBAL_NO_DMG_MISS;
                     break;
-
                 case "Counter":
                     m_Flags |= Flag.GLOBAL_CH_START;
                     break;
-
                 case "CounterND":
                     m_Flags |= Flag.GLOBAL_CH_START_ND;
                     break;
-
                 case "Junhudo":
                     m_Flags |= Flag.GLOBAL_ALL_MOVES;
                     break;
@@ -409,7 +399,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_HP = Math.Max(val, 0);
                     break;
-
                 case "SP":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -417,7 +406,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_SP = Math.Max(val, 0);
                     break;
-
                 case "Burst":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -425,7 +413,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_Burst = Math.Max(val, 0);
                     break;
-
                 case "ChiesCharge":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -433,7 +420,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_CE_PowerCharge = Math.Max(val, 0);
                     break;
-
                 case "YosukesSukukaja":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -441,7 +427,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_YO_Sukukaja = Math.Max(val, 0);
                     break;
-
                 case "YukikosFireBooster":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -449,7 +434,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_YU_FireCounter = Math.Max(val, 0);
                     break;
-
                 case "YukikosFireGuardKill":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -457,7 +441,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_YU_FireBreak = Math.Max(val, 0);
                     break;
-
                 case "NaotosFate":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -465,7 +448,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_NA_Fate = Math.Max(val, 0);
                     break;
-
                 case "KumasItem":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -473,7 +455,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_KU_Item = Math.Max(val, 0);
                     break;
-
                 case "KumasItemFix":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -481,7 +462,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_KU_ItemFix = Math.Max(val, 0);
                     break;
-
                 case "KumasItem2":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -489,7 +469,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_KU_Item2 = Math.Max(val, 0);
                     break;
-
                 case "KumasItem2Fix":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -497,7 +476,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_KU_Item2Fix = Math.Max(val, 0);
                     break;
-
                 case "KumasSPItemFastRecover":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -505,7 +483,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_KU_SPItemFastRecover = Math.Max(val, 0);
                     break;
-
                 case "AkihikosThunder":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -513,7 +490,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_AK_Thunder = Math.Max(val, 0);
                     break;
-
                 case "AegissOrgia":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -521,7 +497,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_AG_Orgia = Math.Max(val, 0);
                     break;
-
                 case "AegissBulletsMax":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -529,7 +504,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_AG_BulletsMax = Math.Max(val, 0);
                     break;
-
                 case "AegissBulletsRecover":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -537,7 +511,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_AG_BulletsRecover = Math.Max(val, 0);
                     break;
-
                 case "LabryssAxInitial":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -545,7 +518,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_LA_AxInitial = Math.Max(val, 0);
                     break;
-
                 case "ShadowLabryssProgramFastRecover":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -553,7 +525,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_LS_ProgramFastRecover = Math.Max(val, 0);
                     break;
-
                 case "JunpeisPoint":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -561,7 +532,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_JU_Point = Math.Max(val, 0);
                     break;
-
                 case "JunpeisFullCount":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -569,7 +539,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_JU_FullCount = Math.Max(val, 0);
                     break;
-
                 case "JunpeisOtakebi":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -577,7 +546,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_JU_Otakebi = Math.Max(val, 0);
                     break;
-
                 case "RisesMarking":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -585,7 +553,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_RI_Marking = Math.Max(val, 0);
                     break;
-
                 case "RisesTetraFastRecover":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -593,7 +560,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_RI_TetraFastRecover = Math.Max(val, 0);
                     break;
-
                 case "RisesBitFastRecover":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -601,7 +567,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_RI_BitFastRecover = Math.Max(val, 0);
                     break;
-
                 case "KorosHP":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -609,7 +574,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_AM_KoroHP = Math.Max(val, 0);
                     break;
-
                 case "AdachisHeat":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -617,7 +581,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_AD_Heat = Math.Max(val, 0);
                     break;
-
                 case "AdachisYodomi":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -625,7 +588,6 @@ namespace P4U2TrialEditor.Core
                     }
                     m_AD_Yodomi = Math.Max(val, 0);
                     break;
-
                 case "MariesOtenki":
                     if (!int.TryParse(tokens[1], out val))
                     {
@@ -633,9 +595,8 @@ namespace P4U2TrialEditor.Core
                     }
                     m_MR_Weather = Math.Max(val, 0);
                     break;
-
-                // Invalid token
                 default:
+                    Console.WriteLine("Invalid mission token: {0}", tokens[1]);
                     Debug.Assert(false, "Invalid token");
                     return false;
             }
@@ -698,7 +659,7 @@ namespace P4U2TrialEditor.Core
             }
 
             Action act = new Action();
-            string[] tokens = action.Split("\t");
+            string[] tokens = action.Split();
 
             // Initial action
             act.SetMsgID(tokens[0]);
@@ -706,6 +667,14 @@ namespace P4U2TrialEditor.Core
             // Extra tokens
             for (int i = 1; i < tokens.Length; i++)
             {
+                // Ignore whitespace and comments
+                if (string.IsNullOrWhiteSpace(tokens[i])
+                    || tokens[i] == string.Empty
+                    || tokens[i].TrimStart().StartsWith("//"))
+                {
+                    continue;
+                }
+
                 // Flags apply to the last action
                 Action actForFlags = act.GetAltActions().Count != 0
                     ? act.GetAltActions().Last() : act;
@@ -813,8 +782,13 @@ namespace P4U2TrialEditor.Core
             while (script[sp] != string.Empty
                 && script[sp][0] != '-')
             {
-                if (!ArcSysParseKey(script[sp], Key.Type.PLAYER)
-                    || ++sp >= script.Length)
+                // BB engine ignores invalid key data, so we only warn
+                if (!ArcSysParseKey(script[sp], Key.Type.PLAYER))
+                {
+                    Console.WriteLine("Invalid key format (sp={0})", sp);
+                }
+
+                if (++sp >= script.Length)
                 {
                     size = -1;
                     return false;
@@ -879,7 +853,7 @@ namespace P4U2TrialEditor.Core
             }
 
             Key k = new Key();
-            string[] tokens = key.Split("\t");
+            string[] tokens = key.Split();
 
             if (tokens.Length != 3)
             {
