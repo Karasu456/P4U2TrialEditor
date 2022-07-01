@@ -24,6 +24,8 @@ namespace P4U2TrialEditor.Core
             }
         }
 
+        #region ArcSys Format
+
         /// <summary>
         /// Create mission file from path to ArcSys formatted data.
         /// </summary>
@@ -234,5 +236,7 @@ namespace P4U2TrialEditor.Core
             size = sp - start;
             return true;
         }
+
+        #endregion ArcSys Format
     }
 }

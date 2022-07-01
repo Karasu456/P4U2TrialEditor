@@ -145,7 +145,7 @@ namespace P4U2TrialEditor.Core
 
         #endregion Accessors
 
-        #region Arc Sys format
+        #region ArcSys format
 
         /// <summary>
         /// Deserialize mission from text form.
@@ -938,7 +938,7 @@ namespace P4U2TrialEditor.Core
             return true;
         }
 
-        #endregion Arc Sys format
+        #endregion ArcSys format
 
         #region Flags
 
