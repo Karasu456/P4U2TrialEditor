@@ -10,7 +10,7 @@
         /// <returns>Action message</returns>
         public static string GetCharaActionMsg(string action, CharacterUtil.EChara chara)
         {
-            string msg;
+            string? msg;
 
             if (string.IsNullOrEmpty(action)
                 || string.IsNullOrWhiteSpace(action))
@@ -27,7 +27,7 @@
                 return msgId;
             }
 
-            return msg;
+            return (msg != null) ? msg : "Empty Action";
         }
 
         /// <summary>

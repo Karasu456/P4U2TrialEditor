@@ -1,4 +1,5 @@
-﻿using P4U2TrialEditor.Util;
+﻿using System.Diagnostics;
+using P4U2TrialEditor.Util;
 
 namespace P4U2TrialEditor.Core
 {
@@ -33,7 +34,7 @@ namespace P4U2TrialEditor.Core
 
                 return file;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return null;
             }
@@ -43,51 +44,85 @@ namespace P4U2TrialEditor.Core
         /// Deserialize mission file from text form.
         /// ArcSys format is expected.
         /// </summary>
-        /// <param name="script"></param>
-        /// <returns></returns>
+        /// <param name="script">Mission file</param>
+        /// <returns>Success</returns>
         public bool ArcSysDeserialize(string[] script)
         {
             int sp = 0;
-            int size;
 
             try
             {
                 // Find Lesson Mode header
-                while (!script[sp].Equals("----Lesson----"))
+                while (script[sp] != "----Lesson----")
                 {
                     sp++;
                 }
-                // Skip header
-                sp++;
 
                 // Parse lessons
-                while (!script[sp].StartsWith("----Char----"))
+                int lessonSize;
+                if (!ArcSysParseLessonSection(script, sp, out lessonSize))
                 {
-                    // Parse mission
-                    Mission lesson = new Mission();
-                    if (!lesson.ArcSysDeserialize(script, sp, out size))
-                    {
-                        return false;
-                    }
-
-                    m_Lessons.Add(lesson);
-                    sp += size;
-
-                    // Skip post-mission whitespace
-                    while (script[sp].Equals(string.Empty))
-                    {
-                        sp++;
-                    }
+                    return false;
                 }
+                sp += lessonSize;
 
                 // TO-DO: Parse trials
                 return true;
             }
-            catch (IndexOutOfRangeException e)
+            catch (IndexOutOfRangeException)
             {
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Parse lesson section of mission file
+        /// </summary>
+        /// <param name="script">Misson script</param>
+        /// <param name="sp">Script position</param>
+        /// <param name="size">Lesson section size</param>
+        /// <returns>Success</returns>
+        public bool ArcSysParseLessonSection(string[] script, int sp, out int size)
+        {
+            Debug.Assert(sp < script.Length);
+
+            // Start pos
+            int start = sp;
+
+            // Validate section header
+            if (script[sp++] != "----Lesson----")
+            {
+                size = -1;
+                return false;
+            }
+
+            // Parse lessons until trial header (or EOF)
+            while (!script[sp].StartsWith("----Char----"))
+            {
+                // Parse mission
+                Mission lesson = new Mission();
+                if (!lesson.ArcSysDeserialize(script, sp, out size))
+                {
+                    return false;
+                }
+                m_Lessons.Add(lesson);
+                sp += size;
+
+                if (sp > script.Length)
+                {
+                    break;
+                }
+
+                // Skip post-mission whitespace
+                while (script[sp] == string.Empty
+                    && ++sp < script.Length)
+                {
+                }
+            }
+
+            size = sp - start;
+            return true;
         }
     }
 }

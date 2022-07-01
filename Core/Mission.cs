@@ -219,7 +219,7 @@ namespace P4U2TrialEditor.Core
                 size = sp - start;
                 return true;
             }
-            catch (IndexOutOfRangeException e)
+            catch (IndexOutOfRangeException)
             {
             }
 
@@ -250,7 +250,7 @@ namespace P4U2TrialEditor.Core
             }
 
             // Read until action list header
-            while (!script[sp].Equals("-LIST-"))
+            while (script[sp] != "-LIST-")
             {
                 // Parse mission flags/settings
                 if (!ArcSysParseMissionFlag(script[sp++])
@@ -300,6 +300,14 @@ namespace P4U2TrialEditor.Core
         /// <returns>Success</returns>
         public bool ArcSysParseMissionFlag(string script)
         {
+            // Ignore whitespace and comments
+            if (string.IsNullOrWhiteSpace(script)
+                || script == string.Empty
+                || script.TrimStart().StartsWith("//"))
+            {
+                return true;
+            }
+
             int val;
             string[] tokens = script.Split("\t");
 
@@ -659,7 +667,7 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse actions until next section (or end of mission)
-            while (!script[sp].Equals(string.Empty)
+            while (script[sp] != string.Empty
                 && script[sp][0] != '-')
             {
                 if (!ArcSysParseAction(script[sp])
@@ -682,6 +690,14 @@ namespace P4U2TrialEditor.Core
         /// <returns>Success</returns>
         public bool ArcSysParseAction(string action)
         {
+            // Ignore whitespace and comments
+            if (string.IsNullOrWhiteSpace(action)
+                || action == string.Empty
+                || action.TrimStart().StartsWith("//"))
+            {
+                return true;
+            }
+
             Action act = new Action();
             string[] tokens = action.Split("\t");
 
@@ -795,7 +811,7 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse actions until next section (or end of mission)
-            while (!script[sp].Equals(string.Empty)
+            while (script[sp] != string.Empty
                 && script[sp][0] != '-')
             {
                 if (!ArcSysParseKey(script[sp], Key.Type.PLAYER)
@@ -832,7 +848,7 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse actions until next section (or end of mission)
-            while (!script[sp].Equals(string.Empty)
+            while (script[sp] != string.Empty
                 && script[sp][0] != '-')
             {
                 if (!ArcSysParseKey(script[sp], Key.Type.ENEMY)
@@ -855,6 +871,14 @@ namespace P4U2TrialEditor.Core
         /// <returns>Success</returns>
         public bool ArcSysParseKey(string key, Key.Type type)
         {
+            // Ignore whitespace and comments
+            if (string.IsNullOrWhiteSpace(key)
+                || key == string.Empty
+                || key.TrimStart().StartsWith("//"))
+            {
+                return true;
+            }
+
             Key k = new Key();
             string[] tokens = key.Split("\t");
 
