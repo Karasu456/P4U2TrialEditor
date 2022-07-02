@@ -30,12 +30,12 @@ namespace P4U2TrialEditor.Core
         /// </summary>
         /// <param name="path">Path to data</param>
         /// <returns>File if successfully opened, otherwise null</returns>
-        public static MissionFile? ArcSysOpen(string path)
+        public static MissionFile? Open(string path)
         {
             try
             {
                 MissionFile file = new MissionFile();
-                if (!file.ArcSysDeserialize(File.ReadAllLines(path)))
+                if (!file.Deserialize(File.ReadAllLines(path)))
                 {
                     return null;
                 }
@@ -54,7 +54,7 @@ namespace P4U2TrialEditor.Core
         /// </summary>
         /// <param name="script">Mission file</param>
         /// <returns>Success</returns>
-        public bool ArcSysDeserialize(string[] script)
+        public bool Deserialize(string[] script)
         {
             int sp = 0;
 
@@ -68,14 +68,14 @@ namespace P4U2TrialEditor.Core
 
                 // Parse lessons
                 int lessonSize;
-                if (!ArcSysParseLessonSection(script, sp, out lessonSize))
+                if (!ParseLessonSection(script, sp, out lessonSize))
                 {
                     return false;
                 }
                 sp += lessonSize;
 
                 int trialsSize;
-                if (!ArcSysParseTrials(script, sp, out trialsSize))
+                if (!ParseTrials(script, sp, out trialsSize))
                 {
                     return false;
                 }
@@ -97,7 +97,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Lesson section size</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseLessonSection(string[] script, int sp, out int size)
+        public bool ParseLessonSection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -117,7 +117,7 @@ namespace P4U2TrialEditor.Core
                 && script[sp].Trim() != "----End----")
             {
                 Mission lesson = new Mission();
-                if (!lesson.ArcSysDeserialize(script, sp, out size))
+                if (!lesson.Deserialize(script, sp, out size))
                 {
                     return false;
                 }
@@ -148,7 +148,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Trials size</param>
         /// <returns></returns>
-        public bool ArcSysParseTrials(string[] script, int sp, out int size)
+        public bool ParseTrials(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -169,7 +169,7 @@ namespace P4U2TrialEditor.Core
                 && script[sp].Trim() != "----End----")
             {
                 int charSize;
-                if (!ArcSysParseCharSection(script, sp, out charSize))
+                if (!ParseCharSection(script, sp, out charSize))
                 {
                     size = -1;
                     return false;
@@ -194,7 +194,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Char section size</param>
         /// <returns></returns>
-        public bool ArcSysParseCharSection(string[] script, int sp, out int size)
+        public bool ParseCharSection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -221,7 +221,7 @@ namespace P4U2TrialEditor.Core
                 && script[sp].Trim() != "----End----")
             {
                 Mission trial = new Mission();
-                if (!trial.ArcSysDeserialize(script, sp, out size))
+                if (!trial.Deserialize(script, sp, out size))
                 {
                     size = -1;
                     return false;

@@ -155,7 +155,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Size of mission data</param>
         /// <returns>Success</returns>
-        public bool ArcSysDeserialize(string[] script, int sp, out int size)
+        public bool Deserialize(string[] script, int sp, out int size)
         {
             // Start pos
             int start = sp;
@@ -170,7 +170,7 @@ namespace P4U2TrialEditor.Core
 
                 // Parse mission section
                 int missionSize;
-                if (!ArcSysParseMissionSection(script, sp, out missionSize))
+                if (!ParseMissionSection(script, sp, out missionSize))
                 {
                     size = -1;
                     return false;
@@ -179,7 +179,7 @@ namespace P4U2TrialEditor.Core
 
                 // Parse action list
                 int listSize;
-                if (!ArcSysParseListSection(script, sp, out listSize))
+                if (!ParseListSection(script, sp, out listSize))
                 {
                     size = -1;
                     return false;
@@ -191,7 +191,7 @@ namespace P4U2TrialEditor.Core
                     // Trial demonstration
                     case "-KEY-":
                         int keySize;
-                        if (!ArcSysParseKeySection(script, sp, out keySize))
+                        if (!ParseKeySection(script, sp, out keySize))
                         {
                             size = -1;
                             return false;
@@ -201,7 +201,7 @@ namespace P4U2TrialEditor.Core
                     // Enemy input
                     case "-EKEY-":
                         int enemyKeySize;
-                        if (!ArcSysParseEnemyKeySection(script, sp, out enemyKeySize))
+                        if (!ParseEnemyKeySection(script, sp, out enemyKeySize))
                         {
                             size = -1;
                             return false;
@@ -240,7 +240,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Mission section size</param>
         /// <returns></returns>
-        public bool ArcSysParseMissionSection(string[] script, int sp, out int size)
+        public bool ParseMissionSection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -248,7 +248,7 @@ namespace P4U2TrialEditor.Core
             int start = sp;
 
             // Parse mission header
-            if (!ArcSysParseMissionHeader(script[sp++]))
+            if (!ParseMissionHeader(script[sp++]))
             {
                 size = -1;
                 return false;
@@ -259,7 +259,7 @@ namespace P4U2TrialEditor.Core
             {
                 // Parse mission flags/settings
                 // (BB engine ignores invalid tokens)
-                if (!ArcSysParseMissionFlag(script[sp]))
+                if (!ParseMissionFlag(script[sp]))
                 {
                     Console.WriteLine("Invalid mission flag: \"{0}\" on line {1}", script[sp], sp);
                 }
@@ -281,7 +281,7 @@ namespace P4U2TrialEditor.Core
         /// </summary>
         /// <param name="header">Mission header</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseMissionHeader(string header)
+        public bool ParseMissionHeader(string header)
         {
             // Validate section header
             if (!header.Trim().StartsWith("-MISSION-"))
@@ -308,7 +308,7 @@ namespace P4U2TrialEditor.Core
         /// </summary>
         /// <param name="script">Mission script line</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseMissionFlag(string script)
+        public bool ParseMissionFlag(string script)
         {
             // Ignore whitespace and comments
             if (string.IsNullOrWhiteSpace(script)
@@ -617,7 +617,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">List section size</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseListSection(string[] script, int sp, out int size)
+        public bool ParseListSection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -636,7 +636,7 @@ namespace P4U2TrialEditor.Core
                 && script[sp][0] != '-')
             {
                 // BB engine ignores invalid tokens
-                ArcSysParseAction(script[sp++]);
+                ParseAction(script[sp++]);
 
                 if (sp >= script.Length)
                 {
@@ -655,7 +655,7 @@ namespace P4U2TrialEditor.Core
         /// </summary>
         /// <param name="action">Action</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseAction(string action)
+        public bool ParseAction(string action)
         {
             // Ignore whitespace and comments
             if (string.IsNullOrWhiteSpace(action)
@@ -772,7 +772,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Key section size</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseKeySection(string[] script, int sp, out int size)
+        public bool ParseKeySection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -790,7 +790,7 @@ namespace P4U2TrialEditor.Core
                 && script[sp][0] != '-')
             {
                 // BB engine ignores invalid key data, so we only warn
-                if (!ArcSysParseKey(script[sp], Key.Type.PLAYER))
+                if (!ParseKey(script[sp], Key.Type.PLAYER))
                 {
                     Console.WriteLine("Invalid key format (sp={0})", sp);
                 }
@@ -813,7 +813,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Key section size</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseEnemyKeySection(string[] script, int sp, out int size)
+        public bool ParseEnemyKeySection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -831,7 +831,7 @@ namespace P4U2TrialEditor.Core
             while (script[sp] != string.Empty
                 && script[sp][0] != '-')
             {
-                if (!ArcSysParseKey(script[sp], Key.Type.ENEMY)
+                if (!ParseKey(script[sp], Key.Type.ENEMY)
                     || ++sp >= script.Length)
                 {
                     size = -1;
@@ -849,7 +849,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="key">Key</param>
         /// <param name="type">Key type (KEY/EKEY)</param>
         /// <returns>Success</returns>
-        public bool ArcSysParseKey(string key, Key.Type type)
+        public bool ParseKey(string key, Key.Type type)
         {
             // Ignore whitespace and comments
             if (string.IsNullOrWhiteSpace(key)
