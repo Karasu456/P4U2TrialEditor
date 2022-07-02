@@ -112,7 +112,9 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse lessons until trial header (or EOF)
-            while (!script[sp].StartsWith("----Char----"))
+            while (sp < script.Length
+                && !script[sp].StartsWith("----Char----")
+                && script[sp].Trim() != "----End----")
             {
                 Mission lesson = new Mission();
                 if (!lesson.ArcSysDeserialize(script, sp, out size))
@@ -163,7 +165,8 @@ namespace P4U2TrialEditor.Core
             }
 
             while (sp < script.Length
-                && script[sp].StartsWith("----Char----"))
+                && script[sp].StartsWith("----Char----")
+                && script[sp].Trim() != "----End----")
             {
                 int charSize;
                 if (!ArcSysParseCharSection(script, sp, out charSize))
@@ -213,7 +216,9 @@ namespace P4U2TrialEditor.Core
             Debug.Assert(chara != CharacterUtil.EChara.COMMON);
 
             // Parse trials until next char header (or EOF)
-            while (!script[sp].StartsWith("----Char----"))
+            while (sp < script.Length
+                && !script[sp].StartsWith("----Char----")
+                && script[sp].Trim() != "----End----")
             {
                 Mission trial = new Mission();
                 if (!trial.ArcSysDeserialize(script, sp, out size))

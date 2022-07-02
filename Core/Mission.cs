@@ -186,7 +186,7 @@ namespace P4U2TrialEditor.Core
                 }
                 sp += listSize;
 
-                switch(script[sp])
+                switch(script[sp].Trim())
                 {
                     // Trial demonstration
                     case "-KEY-":
@@ -255,11 +255,16 @@ namespace P4U2TrialEditor.Core
             }
 
             // Read until action list header
-            while (script[sp] != "-LIST-")
+            while (script[sp].Trim() != "-LIST-")
             {
                 // Parse mission flags/settings
-                if (!ArcSysParseMissionFlag(script[sp++])
-                    || sp >= script.Length)
+                // (BB engine ignores invalid tokens)
+                if (!ArcSysParseMissionFlag(script[sp]))
+                {
+                    Console.WriteLine("Invalid mission flag: \"{0}\" on line {1}", script[sp], sp);
+                }
+
+                if (++sp >= script.Length)
                 {
                     size = -1;
                     return false;
@@ -279,7 +284,7 @@ namespace P4U2TrialEditor.Core
         public bool ArcSysParseMissionHeader(string header)
         {
             // Validate section header
-            if (!header.StartsWith("-MISSION-"))
+            if (!header.Trim().StartsWith("-MISSION-"))
             {
                 return false;
             }
@@ -596,7 +601,7 @@ namespace P4U2TrialEditor.Core
                     m_MR_Weather = Math.Max(val, 0);
                     break;
                 default:
-                    Console.WriteLine("Invalid mission token: {0}", tokens[1]);
+                    Console.WriteLine("Invalid mission token: {0}", tokens[0]);
                     Debug.Assert(false, "Invalid token");
                     return false;
             }
@@ -620,7 +625,7 @@ namespace P4U2TrialEditor.Core
             int start = sp;
 
             // Validate section header
-            if (script[sp++] != "-LIST-")
+            if (script[sp++].Trim() != "-LIST-")
             {
                 size = -1;
                 return false;
@@ -630,8 +635,10 @@ namespace P4U2TrialEditor.Core
             while (script[sp] != string.Empty
                 && script[sp][0] != '-')
             {
-                if (!ArcSysParseAction(script[sp])
-                    || ++sp >= script.Length)
+                // BB engine ignores invalid tokens
+                ArcSysParseAction(script[sp++]);
+
+                if (sp >= script.Length)
                 {
                     size = -1;
                     return false;
@@ -772,7 +779,7 @@ namespace P4U2TrialEditor.Core
             // Start pos
             int start = sp;
 
-            if (script[sp++] != "-KEY-")
+            if (script[sp++].Trim() != "-KEY-")
             {
                 size = -1;
                 return false;
@@ -814,7 +821,7 @@ namespace P4U2TrialEditor.Core
             int start = sp;
 
             // Validate section header
-            if (script[sp++] != "-EKEY-")
+            if (script[sp++].Trim() != "-EKEY-")
             {
                 size = -1;
                 return false;
