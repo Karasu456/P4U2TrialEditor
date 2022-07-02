@@ -6,11 +6,11 @@ namespace P4U2TrialEditor.Core
     internal class Mission
     {
         // Mission character
-        private CharacterUtil.EChara m_Chara;
+        private CharacterUtil.EChara m_Chara = CharacterUtil.EChara.COMMON;
         // Mission ID
-        private int m_ID;
+        private int m_ID = -1;
         // Mission flags
-        private Flag m_Flags;
+        private Flag m_Flags = Flag.NONE;
 
         #region Mission Vars
 
@@ -104,21 +104,18 @@ namespace P4U2TrialEditor.Core
         #endregion Mission Vars
 
         // Mission actions
-        private List<Action> m_ActionList;
+        private List<Action> m_ActionList = new List<Action>();
 
         // Trial demonstration
-        private List<Key> m_Keys;
+        private List<Key> m_Keys = new List<Key>();
         // AI inputs
-        private List<Key> m_EnemyKeys;
+        private List<Key> m_EnemyKeys = new List<Key>();
+
+        // Raw text of mission data
+        private string[] m_RawText = {""};
 
         public Mission()
         {
-            m_Chara = CharacterUtil.EChara.COMMON;
-            m_ID = -1;
-            m_Flags = Flag.NONE;
-            m_ActionList = new List<Action>();
-            m_Keys = new List<Key>();
-            m_EnemyKeys = new List<Key>();
         }
 
         #region Accessors
@@ -141,6 +138,11 @@ namespace P4U2TrialEditor.Core
         public void SetID(int id)
         {
             m_ID = id;
+        }
+
+        public string[] GetRawText()
+        {
+            return m_RawText;
         }
 
         #endregion Accessors
@@ -220,6 +222,10 @@ namespace P4U2TrialEditor.Core
                     && ++sp < script.Length)
                 {
                 }
+
+                // Copy raw mission data
+                m_RawText = new string[sp - start];
+                Array.Copy(script, start, m_RawText, 0, m_RawText.Length);
 
                 size = sp - start;
                 return true;
@@ -602,6 +608,7 @@ namespace P4U2TrialEditor.Core
                     break;
                 default:
                     Console.WriteLine("Invalid mission token: {0}", tokens[0]);
+                    
                     Debug.Assert(false, "Invalid token");
                     return false;
             }

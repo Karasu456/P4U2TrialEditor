@@ -1,3 +1,6 @@
+using P4U2TrialEditor.Util;
+using P4U2TrialEditor.Core;
+
 namespace P4U2TrialEditor
 {
     internal static class Program
@@ -8,8 +11,6 @@ namespace P4U2TrialEditor
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
             Application.Run(new Form1());
         }

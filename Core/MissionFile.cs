@@ -23,29 +23,70 @@ namespace P4U2TrialEditor.Core
             }
         }
 
+        public enum Error
+        {
+            NONE,
+            IO_FAIL,
+            DESERIALIZE_FAIL,
+        };
+
+        #region Accessors
+
+        public List<Mission> GetLessons()
+        {
+            return m_Lessons;
+        }
+
+        public Dictionary<CharacterUtil.EChara, List<Mission>> GetTrials()
+        {
+            return m_Trials;
+        }
+
+        public List<Mission> GetCharaTrials(CharacterUtil.EChara chara)
+        {
+            List<Mission>? trials;
+            if (!m_Trials.TryGetValue(chara, out trials)
+                || trials == null)
+            {
+                return new List<Mission>();
+            }
+
+            return trials;
+        }
+
+        #endregion Accessors
+
         #region ArcSys Format
 
         /// <summary>
         /// Create mission file from path to ArcSys formatted data.
         /// </summary>
         /// <param name="path">Path to data</param>
+        /// <param name="err">Error</param>
         /// <returns>File if successfully opened, otherwise null</returns>
-        public static MissionFile? Open(string path)
+        public static MissionFile? Open(string path, out Error err)
         {
+            MissionFile file = new MissionFile();
+
+            string[] script;
             try
             {
-                MissionFile file = new MissionFile();
-                if (!file.Deserialize(File.ReadAllLines(path)))
-                {
-                    return null;
-                }
-
-                return file;
+                script = File.ReadAllLines(path);
             }
             catch (Exception)
             {
+                err = Error.IO_FAIL;
                 return null;
             }
+
+            if (!file.Deserialize(script))
+            {
+                err = Error.DESERIALIZE_FAIL;
+                return null;
+            }
+
+            err = Error.NONE;
+            return file;
         }
 
         /// <summary>
