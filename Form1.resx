@@ -60,4 +60,11 @@
   <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 17</value>
   </metadata>
+  <data name="m_MissionTextBox.Text" xml:space="preserve">
+    <value>This is the trial script editor.
+
+Open your trials with File &gt; Open, and you will be able to edit them here!
+
+The leftmost panel contains a tree-view of your file, and the middle panel will preview your trial!</value>
+  </data>
 </root>

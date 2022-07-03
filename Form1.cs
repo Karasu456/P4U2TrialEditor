@@ -1,3 +1,6 @@
+using System.Diagnostics;
+using System.Text;
+using System.IO;
 using P4U2TrialEditor.Core;
 using P4U2TrialEditor.Util;
 
@@ -9,6 +12,11 @@ namespace P4U2TrialEditor
         private MissionFile? m_OpenFile = null;
         // Path to currently open file
         private string? m_OpenFilePath = null;
+        // Name of currently open file
+        private string? m_OpenFileName = null;
+
+        // Currently selected mission
+        private Mission? m_CurrentMission = null;
 
         public Form1()
         {
@@ -54,6 +62,7 @@ namespace P4U2TrialEditor
 
             m_OpenFile = file;
             m_OpenFilePath = path;
+            m_OpenFileName = Path.GetFileName(m_OpenFilePath);
             UpdateTreeView();
             return true;
         }
@@ -74,8 +83,8 @@ namespace P4U2TrialEditor
                 m_MissionView.Nodes.Clear();
 
                 // Root node displays filename
-                string rootName = (m_OpenFilePath != null)
-                    ? m_OpenFilePath : "Trial Script";
+                string rootName = (m_OpenFileName != null)
+                    ? m_OpenFileName : "Trial Script";
                 m_MissionView.Nodes.Add(rootName);
                 TreeNode rootNode = m_MissionView.Nodes[0];
 
@@ -107,6 +116,97 @@ namespace P4U2TrialEditor
                 }
             }
             m_MissionView.EndUpdate();
+        }
+
+        /// <summary>
+        /// Callback for when the user is selecting a mission from the tree-view.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MissionView_BeforeSelect(object sender, TreeViewCancelEventArgs e)
+        {
+            // Preserve unsaved changes to the current mission
+            if (m_CurrentMission != null)
+            {
+                // Allocate room for new script
+                string[] newScript = m_MissionTextBox.Text.Split('\n');
+                string[] oldScript = m_CurrentMission.GetRawText();
+                if (newScript.Length > oldScript.Length)
+                {
+                    m_CurrentMission.SetRawText(new string[newScript.Length]);
+                }
+
+                // Copy script contents
+                Array.Copy(newScript, m_CurrentMission.GetRawText(), newScript.Length);
+            }
+        }
+
+        /// <summary>
+        /// Callback for when the user selects a mission from the tree-view.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MissionView_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+            // No selection was made or no file is open
+            if (e.Node == null || m_OpenFile == null)
+            {
+                return;
+            }
+
+            // Find which mission was selected
+            string[] nodes = e.Node.FullPath.Split(
+                m_MissionView.PathSeparator);
+            // Check for at least path to Lesson/Trial root node
+            if (nodes.Length < 3)
+            {
+                return;
+            }
+            // Path < 4 means it can't be a trial mission
+            if (nodes.Length < 4)
+            {
+                if (nodes[1] == "Lessons")
+                {
+                    int lessonId = int.Parse(nodes[2].Split().Last()) - 1;
+                    m_CurrentMission = m_OpenFile.GetLessons()[lessonId];
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else if (nodes[1] == "Trials")
+            {
+                // Character resource ID
+                string resId = nodes[2].Split().Last();
+                resId = resId.Replace("(", "").Replace(")", "");
+                // Get enum value from res ID
+                CharacterUtil.EChara chara = CharacterUtil.GetCharaEnum(resId);
+                int trialId = int.Parse(nodes[3].Split().Last()) - 1;
+                m_CurrentMission = m_OpenFile.GetCharaTrials(chara)[trialId];
+            }
+
+            // Sanity check
+            Debug.Assert(m_CurrentMission != null);
+            if (m_CurrentMission == null)
+            {
+                return;
+            }
+
+            // Load new mission script
+            StringBuilder builder = new StringBuilder();
+            builder.AppendJoin('\n', m_CurrentMission.GetRawText());
+            m_MissionTextBox.Clear();
+            m_MissionTextBox.Text = builder.ToString();
+
+            // Allow text box input
+            m_MissionTextBox.ReadOnly = false;
+            m_MissionTextBox.Enabled = true;
+        }
+
+        private void MissionTextBox_TextChanged(object sender, EventArgs e)
+        {
+
         }
     }
 }

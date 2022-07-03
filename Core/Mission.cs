@@ -145,6 +145,11 @@ namespace P4U2TrialEditor.Core
             return m_RawText;
         }
 
+        public void SetRawText(string[] text)
+        {
+            m_RawText = text;
+        }
+
         #endregion Accessors
 
         #region ArcSys format
@@ -608,8 +613,6 @@ namespace P4U2TrialEditor.Core
                     break;
                 default:
                     Console.WriteLine("Invalid mission token: {0}", tokens[0]);
-                    
-                    Debug.Assert(false, "Invalid token");
                     return false;
             }
 
@@ -871,7 +874,6 @@ namespace P4U2TrialEditor.Core
 
             if (tokens.Length != 3)
             {
-                Debug.Assert(false, "Invalid key input");
                 return false;
             }
 
@@ -902,10 +904,7 @@ namespace P4U2TrialEditor.Core
                     case 'D':
                         k.SetButton(Key.Button.D);
                         break;
-                    case '-':
-                        break;
                     default:
-                        Debug.Assert(false, "Invalid key");
                         break;
                 }
             }

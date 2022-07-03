@@ -28,23 +28,26 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
-            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.m_MissionView = new System.Windows.Forms.TreeView();
-            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveAsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.m_MissionView = new System.Windows.Forms.TreeView();
+            this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.m_MissionTextBox = new System.Windows.Forms.RichTextBox();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
+            this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -59,40 +62,6 @@
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
-            // splitContainer1
-            // 
-            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer1.Location = new System.Drawing.Point(0, 24);
-            this.splitContainer1.Name = "splitContainer1";
-            // 
-            // splitContainer1.Panel1
-            // 
-            this.splitContainer1.Panel1.Controls.Add(this.m_MissionView);
-            // 
-            // splitContainer1.Panel2
-            // 
-            this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
-            this.splitContainer1.Size = new System.Drawing.Size(800, 426);
-            this.splitContainer1.SplitterDistance = 175;
-            this.splitContainer1.TabIndex = 1;
-            // 
-            // m_MissionView
-            // 
-            this.m_MissionView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.m_MissionView.Location = new System.Drawing.Point(0, 0);
-            this.m_MissionView.Name = "m_MissionView";
-            this.m_MissionView.Size = new System.Drawing.Size(175, 426);
-            this.m_MissionView.TabIndex = 0;
-            // 
-            // splitContainer2
-            // 
-            this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainer2.Location = new System.Drawing.Point(0, 0);
-            this.splitContainer2.Name = "splitContainer2";
-            this.splitContainer2.Size = new System.Drawing.Size(621, 426);
-            this.splitContainer2.SplitterDistance = 369;
-            this.splitContainer2.TabIndex = 0;
-            // 
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -104,12 +73,6 @@
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
-            // 
-            // helpToolStripMenuItem
-            // 
-            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
-            this.helpToolStripMenuItem.Text = "Help";
             // 
             // newToolStripMenuItem
             // 
@@ -147,6 +110,66 @@
             this.closeToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.closeToolStripMenuItem.Text = "Close";
             // 
+            // helpToolStripMenuItem
+            // 
+            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.helpToolStripMenuItem.Text = "Help";
+            // 
+            // splitContainer1
+            // 
+            this.splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer1.Location = new System.Drawing.Point(0, 24);
+            this.splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.m_MissionView);
+            // 
+            // splitContainer1.Panel2
+            // 
+            this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
+            this.splitContainer1.Size = new System.Drawing.Size(800, 426);
+            this.splitContainer1.SplitterDistance = 175;
+            this.splitContainer1.TabIndex = 1;
+            // 
+            // m_MissionView
+            // 
+            this.m_MissionView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_MissionView.Location = new System.Drawing.Point(0, 0);
+            this.m_MissionView.Name = "m_MissionView";
+            this.m_MissionView.Size = new System.Drawing.Size(175, 426);
+            this.m_MissionView.TabIndex = 0;
+            this.m_MissionView.BeforeSelect += new System.Windows.Forms.TreeViewCancelEventHandler(this.MissionView_BeforeSelect);
+            this.m_MissionView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.MissionView_AfterSelect);
+            // 
+            // splitContainer2
+            // 
+            this.splitContainer2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer2.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer2.Name = "splitContainer2";
+            // 
+            // splitContainer2.Panel2
+            // 
+            this.splitContainer2.Panel2.Controls.Add(this.m_MissionTextBox);
+            this.splitContainer2.Size = new System.Drawing.Size(621, 426);
+            this.splitContainer2.SplitterDistance = 369;
+            this.splitContainer2.TabIndex = 0;
+            // 
+            // m_MissionTextBox
+            // 
+            this.m_MissionTextBox.DetectUrls = false;
+            this.m_MissionTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_MissionTextBox.Enabled = false;
+            this.m_MissionTextBox.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.m_MissionTextBox.Location = new System.Drawing.Point(0, 0);
+            this.m_MissionTextBox.Name = "m_MissionTextBox";
+            this.m_MissionTextBox.ReadOnly = true;
+            this.m_MissionTextBox.Size = new System.Drawing.Size(248, 426);
+            this.m_MissionTextBox.TabIndex = 0;
+            this.m_MissionTextBox.Text = resources.GetString("m_MissionTextBox.Text");
+            this.m_MissionTextBox.TextChanged += new System.EventHandler(this.MissionTextBox_TextChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -162,6 +185,7 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -182,5 +206,6 @@
         private ToolStripMenuItem saveToolStripMenuItem;
         private ToolStripMenuItem saveAsToolStripMenuItem;
         private ToolStripMenuItem closeToolStripMenuItem;
+        private RichTextBox m_MissionTextBox;
     }
 }
