@@ -39,17 +39,26 @@ namespace P4U2TrialEditor.Util
         /// </summary>
         /// <param name="res">Resource name (for hashing)</param>
         /// <param name="buf">Source buffer</param>
+        public static void CryptMD5(string res, byte[] buf)
+        {
+            int keyIdx = Encoding.ASCII.GetBytes(HashMD5(res))[7] % P4U2_MD5_KEY.Length;
+            for (int i = 0; i < buf.Length; i++, keyIdx++)
+            {
+                buf[i] = (byte)(P4U2_MD5_KEY[keyIdx % P4U2_MD5_KEY.Length] ^ buf[i]);
+            }
+        }
+
+        /// <summary>
+        /// MD5 cryptography algorithm.
+        /// (Reverse engineering done by Geo)
+        /// </summary>
+        /// <param name="res">Resource name (for hashing)</param>
+        /// <param name="buf">Source buffer</param>
         public static byte[] CryptMD5(string res, in byte[] buf)
         {
             byte[] result = new byte[buf.Length];
             buf.CopyTo(result, 0);
-
-            int keyIdx = Encoding.ASCII.GetBytes(HashMD5(res))[7] % P4U2_MD5_KEY.Length;
-            for (int i = 0; i < buf.Length; i++, keyIdx++)
-            {
-                result[i] = (byte)(P4U2_MD5_KEY[keyIdx % P4U2_MD5_KEY.Length] ^ buf[i]);
-            }
-
+            CryptMD5(res, result);
             return result;
         }
 
@@ -89,26 +98,18 @@ namespace P4U2TrialEditor.Util
         /// Encrypt data using the ANG algorithm
         /// </summary>
         /// <param name="buf">Input buffer</param>
-        /// <returns>Encrypted data</returns>
-        public static byte[] EncryptANG(in byte[] buf)
+        public static void EncryptANG(byte[] buf)
         {
-            byte[] result = new byte[buf.Length];
-            buf.CopyTo(result, 0);
-            CryptANG(result, true);
-            return result;
+            CryptANG(buf, true);
         }
 
         /// <summary>
         /// Decrypt data using the ANG algorithm
         /// </summary>
         /// <param name="buf">Input buffer</param>
-        /// <returns>Decrypted data</returns>
-        public static byte[] DecryptANG(in byte[] buf)
+        public static void DecryptANG(byte[] buf)
         {
-            byte[] result = new byte[buf.Length];
-            buf.CopyTo(result, 0);
-            CryptANG(result, false);
-            return result;
+            CryptANG(buf, false);
         }
 
         #endregion ANG

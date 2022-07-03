@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using P4U2TrialEditor.Util;
 
 namespace P4U2TrialEditor.Core
@@ -24,6 +25,8 @@ namespace P4U2TrialEditor.Core
             }
         }
 
+        #region Enums
+
         public enum Error
         {
             NONE,
@@ -38,6 +41,8 @@ namespace P4U2TrialEditor.Core
             MD5,
             MD5_ANG
         };
+
+        #endregion Enums
 
         #region Accessors
 
@@ -63,6 +68,11 @@ namespace P4U2TrialEditor.Core
             return trials;
         }
 
+        public Encryption GetEncryption()
+        {
+            return m_Encryption;
+        }
+
         #endregion Accessors
 
         #region ArcSys Format
@@ -79,53 +89,54 @@ namespace P4U2TrialEditor.Core
 
             try
             {
-                string[] script = File.ReadAllLines(path);
-                // Try parsing plaintext format
-                if (file.Deserialize(script))
+                // Try interpreting file as plaintext
+                using (StreamReader reader = new StreamReader(path))
                 {
-                    file.m_Encryption = Encryption.NONE;
-                    err = Error.NONE;
-                    return file;
+                    if (file.Deserialize(reader))
+                    {
+                        file.m_Encryption = Encryption.NONE;
+                        err = Error.NONE;
+                        return file;
+                    }
                 }
 
-                // Temp filename for storage
-                string tmpFile = Path.GetRandomFileName();
-
-                // First deserialize attempt failed, try decrypting as ANG
-                File.WriteAllBytes(tmpFile,
-                    CryptUtil.DecryptANG(File.ReadAllBytes(path)));
-                if (file.Deserialize(File.ReadAllLines(tmpFile)))
+                // Try interpreting as ANG encrypted text
+                using (StreamReader reader =
+                    new ANGStream(path, ANGStream.Mode.DECRYPT).StreamReader())
                 {
-                    File.Delete(tmpFile);
-                    file.m_Encryption = Encryption.ANG;
-                    err = Error.NONE;
-                    return file;
+                    if (file.Deserialize(reader))
+                    {
+                        file.m_Encryption = Encryption.ANG;
+                        err = Error.NONE;
+                        return file;
+                    }
                 }
 
-                // Second deserialize attempt failed, try decrypting as MD5
-                File.WriteAllBytes(tmpFile,
-                    CryptUtil.CryptMD5("data/trial/trial.ang", File.ReadAllBytes(path)));
-                if (file.Deserialize(File.ReadAllLines(tmpFile)))
+                // Try interpreting as MD5 encrypted text
+                using (StreamReader reader = new MD5Stream(path).StreamReader())
                 {
-                    File.Delete(tmpFile);
-                    file.m_Encryption = Encryption.ANG;
-                    err = Error.NONE;
-                    return file;
+                    if (file.Deserialize(reader))
+                    {
+                        file.m_Encryption = Encryption.MD5;
+                        err = Error.NONE;
+                        return file;
+                    }
                 }
 
-                // The only other possibility is that the file is a MD5-encrypted ANG
-                File.WriteAllBytes(tmpFile,
-                    CryptUtil.DecryptMD5Ang("data/trial/trial.ang", File.ReadAllBytes(path)));
-                if (file.Deserialize(File.ReadAllLines(tmpFile)))
+                // Try interpreting as MD5 encrypted ANG
+                using (StreamReader reader = new ANGStream(
+                    new MD5Stream(path).ToArray(),
+                    ANGStream.Mode.DECRYPT).StreamReader())
                 {
-                    File.Delete(tmpFile);
-                    file.m_Encryption = Encryption.ANG;
-                    err = Error.NONE;
-                    return file;
+                    if (file.Deserialize(reader))
+                    {
+                        file.m_Encryption = Encryption.MD5_ANG;
+                        err = Error.NONE;
+                        return file;
+                    }
                 }
 
                 // All attempts to read the data have failed
-                File.Delete(tmpFile);
                 err = Error.NONE;
                 return file;
             }
@@ -146,27 +157,61 @@ namespace P4U2TrialEditor.Core
         {
             try
             {
-                // Write plaintext data to file
+                // Build text data
+                StringBuilder builder = new StringBuilder();
 
-                // TO-DO
+                // Lesson data
+                builder.Append("----Lesson----");
+                foreach (Mission m in m_Lessons)
+                {
+                    builder.AppendJoin("\n", m.GetRawText());
+                }
+
+                // Trial data
+                for (int i = 0; i < (int)CharacterUtil.EChara.COMMON; i++)
+                {
+                    CharacterUtil.EChara chara = (CharacterUtil.EChara)i;
+                    builder.Append(String.Format("----Char---- {0}",
+                        CharacterUtil.GetCharaResID(chara)));
+
+                    foreach (Mission m in m_Trials[chara])
+                    {
+                        builder.AppendJoin("\n", m.GetRawText());
+                    }
+                }
+
+                // Write plaintext data
+                File.WriteAllText(path, builder.ToString());
 
                 // Encrypt data accordingly
-                switch (m_Encryption)
+                using (FileStream strm = new FileStream(path, FileMode.Create))
                 {
-                    case Encryption.NONE:
-                        break;
-                    case Encryption.ANG:
-                        File.WriteAllBytes(path,
-                            CryptUtil.EncryptANG(File.ReadAllBytes(path)));
-                        break;
-                    case Encryption.MD5:
-                        File.WriteAllBytes(path,
-                            CryptUtil.CryptMD5("data/trial/trial.ang", File.ReadAllBytes(path)));
-                        break;
-                    case Encryption.MD5_ANG:
-                        File.WriteAllBytes(path,
-                            CryptUtil.EncryptMD5Ang("data/trial/trial.ang", File.ReadAllBytes(path)));
-                        break;
+                    switch (m_Encryption)
+                    {
+                        case Encryption.NONE:
+                            break;
+                        case Encryption.ANG:
+                            using (ANGStream astrm = new ANGStream(path, ANGStream.Mode.ENCRYPT))
+                            {
+                                astrm.WriteTo(strm);
+                            }
+                            break;
+                        case Encryption.MD5:
+                            using (MD5Stream mstrm = new MD5Stream("data/trial/trial.ang", path))
+                            {
+                                mstrm.WriteTo(strm);
+                            }
+                            break;
+                        case Encryption.MD5_ANG:
+                            using (ANGStream astrm = new ANGStream(path, ANGStream.Mode.ENCRYPT))
+                            {
+                                using (MD5Stream mstrm = new MD5Stream("data/trial/trial.ang", astrm.ToArray()))
+                                {
+                                    mstrm.WriteTo(strm);
+                                }
+                            }
+                            break;
+                    }
                 }
 
                 return true;
@@ -183,8 +228,17 @@ namespace P4U2TrialEditor.Core
         /// </summary>
         /// <param name="script">Mission file</param>
         /// <returns>Success</returns>
-        public bool Deserialize(string[] script)
+        private bool Deserialize(StreamReader reader)
         {
+            // TEMPORARY, REMOVE FOR STREAM REFACTOR
+            List<String> lscript = new List<String>();
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                lscript.Add(line);
+            }
+            string[] script = lscript.ToArray();
+
             int sp = 0;
 
             try
@@ -226,7 +280,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Lesson section size</param>
         /// <returns>Success</returns>
-        public bool ParseLessonSection(string[] script, int sp, out int size)
+        private bool ParseLessonSection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -277,7 +331,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Trials size</param>
         /// <returns></returns>
-        public bool ParseTrials(string[] script, int sp, out int size)
+        private bool ParseTrials(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
@@ -323,7 +377,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="sp">Script position</param>
         /// <param name="size">Char section size</param>
         /// <returns></returns>
-        public bool ParseCharSection(string[] script, int sp, out int size)
+        private bool ParseCharSection(string[] script, int sp, out int size)
         {
             Debug.Assert(sp < script.Length);
 
