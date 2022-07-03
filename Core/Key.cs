@@ -8,19 +8,12 @@ namespace P4U2TrialEditor.Core
 {
     public class Key
     {
-        // Stick input
-        int m_Stick;
+        // Stick input (numpad notation)
+        int m_Stick = 5;
         // Button input
-        Button m_Buttons;
+        Button m_Buttons = Button.NONE;
         // Input duration
-        int m_Duration;
-
-        public Key()
-        {
-            m_Stick = 5;
-            m_Buttons = Button.NONE;
-            m_Duration = 1;
-        }
+        int m_Duration = 0;
 
         #region Accessors
 

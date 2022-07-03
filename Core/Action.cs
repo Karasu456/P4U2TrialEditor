@@ -5,28 +5,20 @@ namespace P4U2TrialEditor.Core
     public class Action
     {
         // Action message ID/"command"
-        private string m_MsgID;
+        private string m_MsgID = "";
         // Action message can be overridden with "+"
-        private string m_MsgIDOverride;
+        private string m_MsgIDOverride = "";
 
         // Alternative actions (Logical OR)
-        private List<Action> m_AltActions;
+        private List<Action> m_AltActions = new List<Action>();
 
         // Action flags
-        private Flag m_Flags;
+        private Flag m_Flags = Flag.NONE;
 
         // Damage requirement
         private int m_NumDmg = -1;
         // Hit count requirement
         private int m_NumHits = -1;
-
-        public Action()
-        {
-            m_MsgID = "";
-            m_MsgIDOverride = "";
-            m_AltActions = new List<Action>();
-            m_Flags = Flag.NONE;
-        }
 
         #region Accessors
 

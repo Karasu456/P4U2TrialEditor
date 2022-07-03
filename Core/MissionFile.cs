@@ -6,15 +6,13 @@ namespace P4U2TrialEditor.Core
     public class MissionFile
     {
         // Lesson Mode missions
-        private List<Mission> m_Lessons;
+        private List<Mission> m_Lessons = new List<Mission>();
         // Challenge Mode missions
-        private Dictionary<CharacterUtil.EChara, List<Mission>> m_Trials;
+        private Dictionary<CharacterUtil.EChara, List<Mission>> m_Trials =
+            new Dictionary<CharacterUtil.EChara, List<Mission>>();
 
         public MissionFile()
         {
-            m_Lessons = new List<Mission>();
-            m_Trials = new Dictionary<CharacterUtil.EChara, List<Mission>>();
-
             // Initialize dictionary
             foreach (CharacterUtil.EChara chara
                 in Enum.GetValues(typeof(CharacterUtil.EChara)))

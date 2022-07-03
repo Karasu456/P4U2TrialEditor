@@ -114,10 +114,6 @@ namespace P4U2TrialEditor.Core
         // Raw text of mission data
         private string[] m_RawText = {""};
 
-        public Mission()
-        {
-        }
-
         #region Accessors
 
         public CharacterUtil.EChara GetCharacter()
