@@ -11,6 +11,9 @@ namespace P4U2TrialEditor.Core
         private Dictionary<CharacterUtil.EChara, List<Mission>> m_Trials =
             new Dictionary<CharacterUtil.EChara, List<Mission>>();
 
+        // Encryption type
+        private Encryption m_Encryption = Encryption.NONE;
+
         public MissionFile()
         {
             // Initialize dictionary
@@ -26,6 +29,14 @@ namespace P4U2TrialEditor.Core
             NONE,
             IO_FAIL,
             DESERIALIZE_FAIL,
+        };
+
+        public enum Encryption
+        {
+            NONE,
+            ANG,
+            MD5,
+            MD5_ANG
         };
 
         #region Accessors
@@ -66,25 +77,104 @@ namespace P4U2TrialEditor.Core
         {
             MissionFile file = new MissionFile();
 
-            string[] script;
             try
             {
-                script = File.ReadAllLines(path);
+                string[] script = File.ReadAllLines(path);
+                // Try parsing plaintext format
+                if (file.Deserialize(script))
+                {
+                    file.m_Encryption = Encryption.NONE;
+                    err = Error.NONE;
+                    return file;
+                }
+
+                // Temp filename for storage
+                string tmpFile = Path.GetRandomFileName();
+
+                // First deserialize attempt failed, try decrypting as ANG
+                File.WriteAllBytes(tmpFile,
+                    CryptUtil.DecryptANG(File.ReadAllBytes(path)));
+                if (file.Deserialize(File.ReadAllLines(tmpFile)))
+                {
+                    File.Delete(tmpFile);
+                    file.m_Encryption = Encryption.ANG;
+                    err = Error.NONE;
+                    return file;
+                }
+
+                // Second deserialize attempt failed, try decrypting as MD5
+                File.WriteAllBytes(tmpFile,
+                    CryptUtil.CryptMD5("data/trial/trial.ang", File.ReadAllBytes(path)));
+                if (file.Deserialize(File.ReadAllLines(tmpFile)))
+                {
+                    File.Delete(tmpFile);
+                    file.m_Encryption = Encryption.ANG;
+                    err = Error.NONE;
+                    return file;
+                }
+
+                // The only other possibility is that the file is a MD5-encrypted ANG
+                File.WriteAllBytes(tmpFile,
+                    CryptUtil.DecryptMD5Ang("data/trial/trial.ang", File.ReadAllBytes(path)));
+                if (file.Deserialize(File.ReadAllLines(tmpFile)))
+                {
+                    File.Delete(tmpFile);
+                    file.m_Encryption = Encryption.ANG;
+                    err = Error.NONE;
+                    return file;
+                }
+
+                // All attempts to read the data have failed
+                File.Delete(tmpFile);
+                err = Error.NONE;
+                return file;
             }
             catch (Exception)
             {
                 err = Error.IO_FAIL;
                 return null;
             }
+        }
 
-            if (!file.Deserialize(script))
+        /// <summary>
+        /// Write mission file contents to filepath.
+        /// Data uses ArcSys format.
+        /// </summary>
+        /// <param name="path">Output filepath</param>
+        /// <returns>Success</returns>
+        public bool Write(string path)
+        {
+            try
             {
-                err = Error.DESERIALIZE_FAIL;
-                return null;
-            }
+                // Write plaintext data to file
 
-            err = Error.NONE;
-            return file;
+                // TO-DO
+
+                // Encrypt data accordingly
+                switch (m_Encryption)
+                {
+                    case Encryption.NONE:
+                        break;
+                    case Encryption.ANG:
+                        File.WriteAllBytes(path,
+                            CryptUtil.EncryptANG(File.ReadAllBytes(path)));
+                        break;
+                    case Encryption.MD5:
+                        File.WriteAllBytes(path,
+                            CryptUtil.CryptMD5("data/trial/trial.ang", File.ReadAllBytes(path)));
+                        break;
+                    case Encryption.MD5_ANG:
+                        File.WriteAllBytes(path,
+                            CryptUtil.EncryptMD5Ang("data/trial/trial.ang", File.ReadAllBytes(path)));
+                        break;
+                }
+
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         /// <summary>
