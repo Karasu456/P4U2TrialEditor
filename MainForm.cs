@@ -6,7 +6,7 @@ using P4U2TrialEditor.Util;
 
 namespace P4U2TrialEditor
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         // Currently open mission file
         private MissionFile? m_OpenFile = null;
@@ -18,7 +18,7 @@ namespace P4U2TrialEditor
         // Currently selected mission
         private Mission? m_CurrentMission = null;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
         }
