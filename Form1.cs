@@ -181,8 +181,7 @@ namespace P4U2TrialEditor
             {
                 // Allocate room for new script
                 string[] newScript = m_MissionTextBox.Text.Split('\n');
-                string[] oldScript = m_CurrentMission.GetRawText();
-                if (newScript.Length > oldScript.Length)
+                if (newScript.Length > m_CurrentMission.GetRawText().Length)
                 {
                     m_CurrentMission.SetRawText(new string[newScript.Length]);
                 }

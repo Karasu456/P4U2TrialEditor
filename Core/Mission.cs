@@ -184,6 +184,12 @@ namespace P4U2TrialEditor.Core
                 }
                 sp += missionSize;
 
+                // Skip trailing whitespace
+                while (script[sp] == string.Empty
+                    && ++sp < script.Length)
+                {
+                }
+
                 // Parse action list
                 int listSize;
                 if (!ParseListSection(script, sp, out listSize))
@@ -193,7 +199,13 @@ namespace P4U2TrialEditor.Core
                 }
                 sp += listSize;
 
-                switch(script[sp].Trim())
+                // Skip trailing whitespace
+                while (script[sp] == string.Empty
+                    && ++sp < script.Length)
+                {
+                }
+
+                switch (script[sp].Trim())
                 {
                     // Trial demonstration
                     case "-KEY-":
@@ -216,8 +228,6 @@ namespace P4U2TrialEditor.Core
                         sp += enemyKeySize;
                         break;
                     // End of mission/unknown delimiter
-                    // Sometimes the devs forgot to separate missions with newlines :)
-                    case "":
                     default:
                         break;
                 }
