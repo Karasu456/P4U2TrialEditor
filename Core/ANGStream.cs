@@ -36,9 +36,9 @@ namespace P4U2TrialEditor.Core
 
         #endregion Constructors
 
-        public StreamReader StreamReader()
+        public StreamReaderEx StreamReaderEx()
         {
-            return new StreamReader(this, Encoding.ASCII);
+            return new StreamReaderEx(this, Encoding.ASCII);
         }
     }
 }

@@ -178,12 +178,10 @@ namespace P4U2TrialEditor
             // Preserve unsaved changes to the current mission
             if (m_CurrentMission != null)
             {
-                // Allocate room for new script
-                string[] newScript = m_MissionTextBox.Text.Split('\n');
-                m_CurrentMission.SetRawText(new string[newScript.Length]);
-
                 // Overwrite script contents
-                Array.Copy(newScript, m_CurrentMission.GetRawText(), newScript.Length);
+                m_CurrentMission.GetRawText().Clear();
+                m_CurrentMission.GetRawText().AddRange(
+                    m_MissionTextBox.Text.Split('\n'));
             }
         }
 

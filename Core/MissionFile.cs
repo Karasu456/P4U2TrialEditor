@@ -90,7 +90,7 @@ namespace P4U2TrialEditor.Core
             try
             {
                 // Try interpreting file as plaintext
-                using (StreamReader reader = new StreamReader(path))
+                using (StreamReaderEx reader = new StreamReaderEx(path))
                 {
                     if (file.Deserialize(reader))
                     {
@@ -101,8 +101,8 @@ namespace P4U2TrialEditor.Core
                 }
 
                 // Try interpreting as ANG encrypted text
-                using (StreamReader reader =
-                    new ANGStream(path, ANGStream.Mode.DECRYPT).StreamReader())
+                using (StreamReaderEx reader =
+                    new ANGStream(path, ANGStream.Mode.DECRYPT).StreamReaderEx())
                 {
                     if (file.Deserialize(reader))
                     {
@@ -113,7 +113,7 @@ namespace P4U2TrialEditor.Core
                 }
 
                 // Try interpreting as MD5 encrypted text
-                using (StreamReader reader = new MD5Stream(path).StreamReader())
+                using (StreamReaderEx reader = new MD5Stream(path).StreamReaderEx())
                 {
                     if (file.Deserialize(reader))
                     {
@@ -124,9 +124,9 @@ namespace P4U2TrialEditor.Core
                 }
 
                 // Try interpreting as MD5 encrypted ANG
-                using (StreamReader reader = new ANGStream(
+                using (StreamReaderEx reader = new ANGStream(
                     new MD5Stream(path).ToArray(),
-                    ANGStream.Mode.DECRYPT).StreamReader())
+                    ANGStream.Mode.DECRYPT).StreamReaderEx())
                 {
                     if (file.Deserialize(reader))
                     {
@@ -137,7 +137,7 @@ namespace P4U2TrialEditor.Core
                 }
 
                 // All attempts to read the data have failed
-                err = Error.NONE;
+                err = Error.DESERIALIZE_FAIL;
                 return file;
             }
             catch (Exception)
@@ -224,172 +224,122 @@ namespace P4U2TrialEditor.Core
 
         /// <summary>
         /// Deserialize mission file from text form.
-        /// ArcSys format is expected.
         /// </summary>
-        /// <param name="script">Mission file</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        private bool Deserialize(StreamReader reader)
+        private bool Deserialize(StreamReaderEx reader)
         {
-            // TEMPORARY, REMOVE FOR STREAM REFACTOR
-            List<String> lscript = new List<String>();
-            string? line;
-            while ((line = reader.ReadLine()) != null)
+            if (reader.EndOfStream)
             {
-                lscript.Add(line);
-            }
-            string[] script = lscript.ToArray();
-
-            int sp = 0;
-
-            try
-            {
-                // Find Lesson Mode header
-                while (script[sp] != "----Lesson----")
-                {
-                    sp++;
-                }
-
-                // Parse lessons
-                int lessonSize;
-                if (!ParseLessonSection(script, sp, out lessonSize))
-                {
-                    return false;
-                }
-                sp += lessonSize;
-
-                int trialsSize;
-                if (!ParseTrials(script, sp, out trialsSize))
-                {
-                    return false;
-                }
-                sp += trialsSize;
-
-                return true;
-            }
-            catch (IndexOutOfRangeException)
-            {
+                return false;
             }
 
-            return false;
+            // Find Lesson Mode header
+            if (!reader.FindExact("----Lesson----"))
+            {
+                return false;
+            }
+
+            // Parse lessons
+            if (!ParseLessonSection(reader))
+            {
+                return false;
+            }
+
+            if (!ParseTrials(reader))
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
-        /// Parse lesson section of mission file
+        /// Deserialize lesson section of mission file.
         /// </summary>
-        /// <param name="script">Misson script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">Lesson section size</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        private bool ParseLessonSection(string[] script, int sp, out int size)
+        private bool ParseLessonSection(StreamReaderEx reader)
         {
-            Debug.Assert(sp < script.Length);
-
-            // Start pos
-            int start = sp;
+            if (reader.EndOfStream)
+            {
+                return false;
+            }
 
             // Validate section header
-            if (script[sp++] != "----Lesson----")
+            if (reader.ReadLine()! != "----Lesson----")
             {
-                size = -1;
                 return false;
             }
 
             // Parse lessons until trial header (or EOF)
-            while (sp < script.Length
-                && !script[sp].StartsWith("----Char----")
-                && script[sp].Trim() != "----End----")
+            while (reader.PeekLine() != null
+                && !reader.PeekLine()!.StartsWith("----Char----")
+                && reader.PeekLine()!.Trim() != ("----End----"))
             {
                 Mission lesson = new Mission();
-                if (!lesson.Deserialize(script, sp, out size))
+                if (!lesson.Deserialize(reader))
                 {
                     return false;
                 }
-
                 m_Lessons.Add(lesson);
-                sp += size;
-
-                if (sp > script.Length)
-                {
-                    break;
-                }
 
                 // Skip post-lesson whitespace
-                while (script[sp] == string.Empty
-                    && ++sp < script.Length)
-                {
-                }
+                reader.Trim();
             }
 
-            size = sp - start;
             return true;
         }
 
         /// <summary>
-        /// Parse trials from mission file
+        /// Deserialize trials section of mission file.
         /// </summary>
-        /// <param name="script">Mission script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">Trials size</param>
-        /// <returns></returns>
-        private bool ParseTrials(string[] script, int sp, out int size)
+        /// <param name="reader">Stream to script</param>
+        /// <returns>Success</returns>
+        private bool ParseTrials(StreamReaderEx reader)
         {
-            Debug.Assert(sp < script.Length);
-
-            // Start pos
-            int start = sp;
-
-            // Validate section header
-            string[] tokens = script[sp].Split();
-            if (tokens.Length != 2
-                || tokens[0] != "----Char----")
+            if (reader.EndOfStream)
             {
-                size = -1;
                 return false;
             }
 
-            while (sp < script.Length
-                && script[sp].StartsWith("----Char----")
-                && script[sp].Trim() != "----End----")
+            // Validate section header
+            if (!reader.PeekLine()!.StartsWith("----Char----"))
             {
-                int charSize;
-                if (!ParseCharSection(script, sp, out charSize))
-                {
-                    size = -1;
-                    return false;
-                }
-                sp += charSize;
+                return false;
+            }
 
-                // Skip post-trial whitespace
-                while (script[sp] == string.Empty
-                    && ++sp < script.Length)
+            // Parse lessons until trial header (or EOF)
+            while (reader.PeekLine() != null
+                && reader.PeekLine()!.StartsWith("----Char----")
+                && reader.PeekLine()!.Trim() != ("----End----"))
+            {
+                if (!ParseCharSection(reader))
                 {
+                    return false;
                 }
             }
 
-            size = sp - start;
             return true;
         }
 
         /// <summary>
-        /// Parse char section of mission file
+        /// Deserialize char section of mission file.
         /// </summary>
-        /// <param name="script">Mission script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">Char section size</param>
-        /// <returns></returns>
-        private bool ParseCharSection(string[] script, int sp, out int size)
+        /// <param name="reader">Stream to script</param>
+        /// <returns>Success</returns>
+        private bool ParseCharSection(StreamReaderEx reader)
         {
-            Debug.Assert(sp < script.Length);
-
-            // Start pos
-            int start = sp;
+            if (reader.EndOfStream)
+            {
+                return false;
+            }
 
             // Validate section header
-            string[] tokens = script[sp++].Split();
+            string[] tokens = reader.ReadLine()!.Split();
             if (tokens.Length != 2
                 || tokens[0] != "----Char----")
             {
-                size = -1;
                 return false;
             }
 
@@ -398,29 +348,24 @@ namespace P4U2TrialEditor.Core
                 = CharacterUtil.GetCharaEnum(tokens[1]);
             Debug.Assert(chara != CharacterUtil.EChara.COMMON);
 
-            // Parse trials until next char header (or EOF)
-            while (sp < script.Length
-                && !script[sp].StartsWith("----Char----")
-                && script[sp].Trim() != "----End----")
+            // Parse lessons until trial header (or EOF)
+            while (reader.PeekLine() != null
+                && !reader.PeekLine()!.StartsWith("----Char----")
+                && reader.PeekLine()!.Trim() != ("----End----"))
             {
                 Mission trial = new Mission();
-                if (!trial.Deserialize(script, sp, out size))
+                if (!trial.Deserialize(reader))
                 {
-                    size = -1;
                     return false;
                 }
 
                 trial.SetCharacter(chara);
                 m_Trials[chara].Add(trial);
-                sp += size;
 
-                if (sp > script.Length)
-                {
-                    break;
-                }
+                // Skip post-trial whitespace
+                reader.Trim();
             }
 
-            size = sp - start;
             return true;
         }
 

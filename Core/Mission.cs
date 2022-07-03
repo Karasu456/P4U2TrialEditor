@@ -112,7 +112,7 @@ namespace P4U2TrialEditor.Core
         private List<Key> m_EnemyKeys = new List<Key>();
 
         // Raw text of mission data
-        private string[] m_RawText = {""};
+        private List<string> m_RawText = new List<string>();
 
         #region Accessors
 
@@ -136,12 +136,12 @@ namespace P4U2TrialEditor.Core
             m_ID = id;
         }
 
-        public string[] GetRawText()
+        public List<string> GetRawText()
         {
             return m_RawText;
         }
 
-        public void SetRawText(string[] text)
+        public void SetRawText(List<String> text)
         {
             m_RawText = text;
         }
@@ -151,164 +151,134 @@ namespace P4U2TrialEditor.Core
         #region ArcSys format
 
         /// <summary>
-        /// Deserialize mission from text form.
-        /// ArcSys format is expected.
+        /// Deserialize mission from mission file.
         /// </summary>
-        /// <param name="script">Mission script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">Size of mission data</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        public bool Deserialize(string[] script, int sp, out int size)
+        public bool Deserialize(StreamReaderEx reader)
         {
-            // Start pos
-            int start = sp;
-
-            try
+            if (reader.EndOfStream)
             {
-                // Find mission header
-                while (!script[sp].StartsWith("-MISSION-"))
-                {
-                    sp++;
-                }
-
-                // Parse mission section
-                int missionSize;
-                if (!ParseMissionSection(script, sp, out missionSize))
-                {
-                    size = -1;
-                    return false;
-                }
-                sp += missionSize;
-
-                // Skip trailing whitespace
-                while (script[sp] == string.Empty
-                    && ++sp < script.Length)
-                {
-                }
-
-                // Parse action list
-                int listSize;
-                if (!ParseListSection(script, sp, out listSize))
-                {
-                    size = -1;
-                    return false;
-                }
-                sp += listSize;
-
-                // Skip trailing whitespace
-                while (script[sp] == string.Empty
-                    && ++sp < script.Length)
-                {
-                }
-
-                switch (script[sp].Trim())
-                {
-                    // Trial demonstration
-                    case "-KEY-":
-                        int keySize;
-                        if (!ParseKeySection(script, sp, out keySize))
-                        {
-                            size = -1;
-                            return false;
-                        }
-                        sp += keySize;
-                        break;
-                    // Enemy input
-                    case "-EKEY-":
-                        int enemyKeySize;
-                        if (!ParseEnemyKeySection(script, sp, out enemyKeySize))
-                        {
-                            size = -1;
-                            return false;
-                        }
-                        sp += enemyKeySize;
-                        break;
-                    // End of mission/unknown delimiter
-                    default:
-                        break;
-                }
-
-                // Skip trailing whitespace
-                while (script[sp] == string.Empty
-                    && ++sp < script.Length)
-                {
-                }
-
-                // Copy raw mission data
-                m_RawText = new string[sp - start];
-                Array.Copy(script, start, m_RawText, 0, m_RawText.Length);
-
-                size = sp - start;
-                return true;
-            }
-            catch (IndexOutOfRangeException)
-            {
-            }
-
-            size = -1;
-            return false;
-        }
-
-        /// <summary>
-        /// Parse mission section from script.
-        /// ArcSys format is expected.
-        /// </summary>
-        /// <param name="script">Mission script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">Mission section size</param>
-        /// <returns></returns>
-        public bool ParseMissionSection(string[] script, int sp, out int size)
-        {
-            Debug.Assert(sp < script.Length);
-
-            // Start pos
-            int start = sp;
-
-            // Parse mission header
-            if (!ParseMissionHeader(script[sp++]))
-            {
-                size = -1;
                 return false;
             }
 
-            // Read until action list header
-            while (script[sp].Trim() != "-LIST-")
+            // Cache raw text for editor
+            reader.BeginCache();
             {
-                // Parse mission flags/settings
-                // (BB engine ignores invalid tokens)
-                if (!ParseMissionFlag(script[sp]))
+                // Find mission header
+                if (!reader.Find("-MISSION-"))
                 {
-                    Console.WriteLine("Invalid mission flag: \"{0}\" on line {1}", script[sp], sp);
-                }
-
-                if (++sp >= script.Length)
-                {
-                    size = -1;
+                    reader.EndCache();
                     return false;
                 }
-            }
 
-            size = sp - start;
+                // Parse mission section
+                if (!ParseMissionSection(reader))
+                {
+                    reader.EndCache();
+                    return false;
+                }
+
+                // Parse action list
+                if (!ParseListSection(reader))
+                {
+                    reader.EndCache();
+                    return false;
+                }
+
+                // Parse optional sections
+                if (reader.PeekLine() != null)
+                {
+                    switch (reader.PeekLine()!.Trim())
+                    {
+                        // Trial demonstration
+                        case "-KEY-":
+                            if (!ParseKeySection(reader))
+                            {
+                                reader.EndCache();
+                                return false;
+                            }
+                            break;
+                        // Enemy input
+                        case "-EKEY-":
+                            if (!ParseEnemyKeySection(reader))
+                            {
+                                reader.EndCache();
+                                return false;
+                            }
+                            break;
+                        // End of mission/unknown delimiter
+                        default:
+                            break;
+                    }
+                }
+
+                // Skip trailing whitespace
+                reader.Trim();
+            }
+            reader.EndCache();
+
+            // Copy script
+            m_RawText.Clear();
+            m_RawText.AddRange(reader.GetCache());
+
             return true;
         }
 
         /// <summary>
-        /// Parse mission header.
-        /// ArcSys format is expected.
+        /// Deserialize mission section of mission script.
         /// </summary>
-        /// <param name="header">Mission header</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        public bool ParseMissionHeader(string header)
+        private bool ParseMissionSection(StreamReaderEx reader)
         {
-            // Validate section header
-            if (!header.Trim().StartsWith("-MISSION-"))
+            if (reader.EndOfStream)
             {
                 return false;
             }
 
-            int id;
-            string[] tokens = header.Split();
+            // Parse mission header
+            if (!ParseMissionHeader(reader))
+            {
+                return false;
+            }
 
+            // Read until action list header
+            while (reader.PeekLine() != null
+                && reader.PeekLine() != "-LIST-")
+            {
+                // Parse mission flags/settings
+                // (BB engine ignores invalid tokens)
+                if (!ParseMissionFlag(reader))
+                {
+                    Console.WriteLine("Invalid mission flag: \"{0}\"", reader.PeekLine()!);
+                }
+
+                reader.Trim();
+            }
+
+            reader.Trim();
+            return true;
+        }
+
+        /// <summary>
+        /// Parse mission header of mission script.
+        /// </summary>
+        /// <param name="reader">Stream to script</param>
+        /// <returns>Success</returns>
+        private bool ParseMissionHeader(StreamReaderEx reader)
+        {
+            // Validate header
+            // (NOTE: Only called from ParseMissionSection,
+            // we know the stream cannot be empty yet)
+            if (!reader.PeekLine()!.Trim().StartsWith("-MISSION-"))
+            {
+                return false;
+            }
+
+            // Mission ID
+            int id;
+            string[] tokens = reader.ReadLine()!.Split();
             if (tokens.Length != 2
                 || !int.TryParse(tokens[1], out id))
             {
@@ -320,23 +290,29 @@ namespace P4U2TrialEditor.Core
         }
 
         /// <summary>
-        /// Parse mission flag/setting from tokens.
-        /// ArcSys format is expected.
+        /// Parse mission flag/setting
         /// </summary>
-        /// <param name="script">Mission script line</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        public bool ParseMissionFlag(string script)
+        private bool ParseMissionFlag(StreamReaderEx reader)
         {
-            // Ignore whitespace and comments
-            if (string.IsNullOrWhiteSpace(script)
-                || script == string.Empty
-                || script.TrimStart().StartsWith("//"))
+            if (reader.EndOfStream)
             {
+                return false;
+            }
+
+            // Ignore whitespace and comments
+            if (string.IsNullOrWhiteSpace(reader.PeekLine())
+                || reader.PeekLine()! == string.Empty
+                || reader.PeekLine()!.TrimStart().StartsWith("//"))
+            {
+                // TO-DO: Refactor
+                reader.ReadLine();
                 return true;
             }
 
             int val;
-            string[] tokens = script.Split();
+            string[] tokens = reader.ReadLine()!.Split();
 
             switch (tokens[0])
             {
@@ -622,69 +598,65 @@ namespace P4U2TrialEditor.Core
                     return false;
             }
 
+            reader.Trim();
             return true;
         }
 
         /// <summary>
-        /// Parse action list from script.
-        /// ArcSys format is expected.
+        /// Parse action list from mission script
         /// </summary>
-        /// <param name="script">Mission script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">List section size</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        public bool ParseListSection(string[] script, int sp, out int size)
+        private bool ParseListSection(StreamReaderEx reader)
         {
-            Debug.Assert(sp < script.Length);
-
-            // Start pos
-            int start = sp;
+            if (reader.EndOfStream)
+            {
+                return false;
+            }
 
             // Validate section header
-            if (script[sp++].Trim() != "-LIST-")
+            if (reader.ReadLine()!.Trim() != "-LIST-")
             {
-                size = -1;
                 return false;
             }
 
             // Parse actions until next section (or end of mission)
-            while (script[sp] != string.Empty
-                && script[sp][0] != '-')
+            while (reader.PeekLine() != null
+                && reader.PeekLine()! != string.Empty
+                && reader.PeekLine()![0] != '-')
             {
                 // BB engine ignores invalid tokens
-                ParseAction(script[sp++]);
-
-                if (sp >= script.Length)
-                {
-                    size = -1;
-                    return false;
-                }
+                ParseAction(reader);
             }
 
-            size = sp - start;
+            reader.Trim();
             return true;
         }
 
         /// <summary>
-        /// Parse action from tokens.
-        /// ArcSys format is expected.
+        /// Parse action from mission script
         /// </summary>
-        /// <param name="action">Action</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        public bool ParseAction(string action)
+        private bool ParseAction(StreamReaderEx reader)
         {
+            if (reader.EndOfStream)
+            {
+                return false;
+            }
+
             // Ignore whitespace and comments
-            if (string.IsNullOrWhiteSpace(action)
-                || action == string.Empty
-                || action.TrimStart().StartsWith("//"))
+            if (string.IsNullOrWhiteSpace(reader.PeekLine()!)
+                || reader.PeekLine()! == string.Empty
+                || reader.PeekLine()!.TrimStart().StartsWith("//"))
             {
                 return true;
             }
 
-            Action act = new Action();
-            string[] tokens = action.Split();
+            string[] tokens = reader.ReadLine()!.Split();
 
             // Initial action
+            Action act = new Action();
             act.SetMsgID(tokens[0]);
 
             // Extra tokens
@@ -784,89 +756,85 @@ namespace P4U2TrialEditor.Core
         /// <summary>
         /// Parse player key list from script
         /// </summary>
-        /// <param name="script">Mission script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">Key section size</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        public bool ParseKeySection(string[] script, int sp, out int size)
+        private bool ParseKeySection(StreamReaderEx reader)
         {
-            Debug.Assert(sp < script.Length);
-
-            // Start pos
-            int start = sp;
-
-            if (script[sp++].Trim() != "-KEY-")
+            if (reader.EndOfStream)
             {
-                size = -1;
+                return false;
+            }
+
+            // Validate section header
+            if (reader.ReadLine()!.Trim() != "-KEY-")
+            {
                 return false;
             }
 
             // Parse actions until next section (or end of mission)
-            while (script[sp] != string.Empty
-                && script[sp][0] != '-')
+            while (reader.PeekLine() != null
+                && reader.PeekLine()! != string.Empty
+                && reader.PeekLine()![0] != '-')
             {
                 // BB engine ignores invalid key data, so we only warn
-                if (!ParseKey(script[sp], Key.Type.PLAYER))
+                if (!ParseKey(reader, Key.Type.PLAYER))
                 {
-                    Console.WriteLine("Invalid key format (sp={0})", sp);
-                }
-
-                if (++sp >= script.Length)
-                {
-                    size = -1;
-                    return false;
+                    Console.WriteLine("Invalid key format: \"{0}\"",
+                        reader.PeekLine()!);
                 }
             }
 
-            size = sp - start;
             return true;
         }
 
         /// <summary>
         /// Parse enemy key list from script
         /// </summary>
-        /// <param name="script">Mission script</param>
-        /// <param name="sp">Script position</param>
-        /// <param name="size">Key section size</param>
+        /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
-        public bool ParseEnemyKeySection(string[] script, int sp, out int size)
+        public bool ParseEnemyKeySection(StreamReaderEx reader)
         {
-            Debug.Assert(sp < script.Length);
-
-            // Start pos
-            int start = sp;
+            if (reader.EndOfStream)
+            {
+                return false;
+            }
 
             // Validate section header
-            if (script[sp++].Trim() != "-EKEY-")
+            if (reader.ReadLine()!.Trim() != "-EKEY-")
             {
-                size = -1;
                 return false;
             }
 
             // Parse actions until next section (or end of mission)
-            while (script[sp] != string.Empty
-                && script[sp][0] != '-')
+            while (reader.PeekLine() != null
+                && reader.PeekLine()! != string.Empty
+                && reader.PeekLine()![0] != '-')
             {
-                if (!ParseKey(script[sp], Key.Type.ENEMY)
-                    || ++sp >= script.Length)
+                // BB engine ignores invalid key data, so we only warn
+                if (!ParseKey(reader, Key.Type.ENEMY))
                 {
-                    size = -1;
-                    return false;
+                    Console.WriteLine("Invalid key format: \"{0}\"",
+                        reader.PeekLine()!);
                 }
             }
 
-            size = sp - start;
             return true;
         }
 
         /// <summary>
         /// Parse key input from tokens
         /// </summary>
-        /// <param name="key">Key</param>
+        /// <param name="reader">Stream to script</param>
         /// <param name="type">Key type (KEY/EKEY)</param>
         /// <returns>Success</returns>
-        public bool ParseKey(string key, Key.Type type)
+        public bool ParseKey(StreamReaderEx reader, Key.Type type)
         {
+            if (reader.EndOfStream)
+            {
+                return false;
+            }
+            string key = reader.ReadLine()!;
+
             // Ignore whitespace and comments
             if (string.IsNullOrWhiteSpace(key)
                 || key == string.Empty

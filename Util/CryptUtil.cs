@@ -11,7 +11,7 @@ namespace P4U2TrialEditor.Util
     // https://github.com/Geordan9/GeoArcSysAIOCLITool
     //
 
-    public class CryptUtil
+    public static class CryptUtil
     {
         #region MD5
 
