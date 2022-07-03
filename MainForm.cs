@@ -31,23 +31,22 @@ namespace P4U2TrialEditor
         private bool Open(string path)
         {
             MissionFile.Error err;
-            MissionFile? file = MissionFile.Open(path, out err);
+            m_OpenFile = MissionFile.Open(path, out err);
 
             switch(err)
             {
                 case MissionFile.Error.IO_FAIL:
                     MessageBox.Show("The file could not be opened.", "File Error");
-                    m_OpenFile = null;
                     m_OpenFilePath = null;
+                    m_OpenFileName = null;
                     return false;
                 case MissionFile.Error.DESERIALIZE_FAIL:
                     MessageBox.Show("The trial script is not formatted correctly.", "Script Error");
-                    m_OpenFile = null;
                     m_OpenFilePath = null;
+                    m_OpenFileName = null;
                     return false;
             }
 
-            m_OpenFile = file;
             m_OpenFilePath = path;
             m_OpenFileName = Path.GetFileName(m_OpenFilePath);
             UpdateTreeView();
