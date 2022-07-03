@@ -180,12 +180,9 @@ namespace P4U2TrialEditor
             {
                 // Allocate room for new script
                 string[] newScript = m_MissionTextBox.Text.Split('\n');
-                if (newScript.Length > m_CurrentMission.GetRawText().Length)
-                {
-                    m_CurrentMission.SetRawText(new string[newScript.Length]);
-                }
+                m_CurrentMission.SetRawText(new string[newScript.Length]);
 
-                // Copy script contents
+                // Overwrite script contents
                 Array.Copy(newScript, m_CurrentMission.GetRawText(), newScript.Length);
             }
         }
