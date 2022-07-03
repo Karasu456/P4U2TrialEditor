@@ -204,8 +204,13 @@ namespace P4U2TrialEditor
                 return;
             }
 
+            // Highlight selected tree node
+            e.Node.BackColor = SystemColors.HighlightText;
+
             // Get selected mission
-            m_CurrentMission = GetMissionFromTreeNode(e.Node);
+            Mission? selected = GetMissionFromTreeNode(e.Node);
+            // If no mission is selected, don't deselect the current one
+            m_CurrentMission = (selected == null) ? m_CurrentMission : selected;
 
             // Sanity check
             Debug.Assert(m_CurrentMission != null);
