@@ -3,7 +3,7 @@ using P4U2TrialEditor.Util;
 
 namespace P4U2TrialEditor.Core
 {
-    internal class Mission
+    public class Mission
     {
         // Mission character
         private CharacterUtil.EChara m_Chara = CharacterUtil.EChara.COMMON;

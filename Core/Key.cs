@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace P4U2TrialEditor.Core
 {
-    internal class Key
+    public class Key
     {
         // Stick input
         int m_Stick;

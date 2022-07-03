@@ -3,7 +3,7 @@ using P4U2TrialEditor.Util;
 
 namespace P4U2TrialEditor.Core
 {
-    internal class MissionFile
+    public class MissionFile
     {
         // Lesson Mode missions
         private List<Mission> m_Lessons;

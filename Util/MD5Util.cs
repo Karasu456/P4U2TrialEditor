@@ -8,7 +8,7 @@ using System.Text;
 //
 namespace P4U2TrialEditor.Util
 {
-    internal static class MD5Util
+    public static class MD5Util
     {
         private static readonly byte[] P4U2_KEY = {
             0x71, 0x59, 0x7A, 0xBA, 0xC5, 0x04, 0x08, 0x9D, 0x73, 0x90, 0xB7,

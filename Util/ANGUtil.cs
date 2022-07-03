@@ -7,7 +7,7 @@ using System.Numerics;
 //
 namespace P4U2TrialEditor.Util
 {
-    internal static class ANGUtil
+    public static class ANGUtil
     {
         /// <summary>
         /// ANG cryptography algorithm.

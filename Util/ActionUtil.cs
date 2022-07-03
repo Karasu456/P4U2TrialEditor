@@ -1,6 +1,6 @@
 ﻿namespace P4U2TrialEditor.Util
 {
-    internal static class ActionUtil
+    public static class ActionUtil
     {
         /// <summary>
         /// Query action message by character

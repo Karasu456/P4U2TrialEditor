@@ -2,7 +2,7 @@
 
 namespace P4U2TrialEditor.Core
 {
-    internal class Action
+    public class Action
     {
         // Action message ID/"command"
         private string m_MsgID;

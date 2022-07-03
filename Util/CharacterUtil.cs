@@ -1,6 +1,6 @@
 ﻿namespace P4U2TrialEditor.Util
 {
-    internal static class CharacterUtil
+    public static class CharacterUtil
     {
         public enum EChara
         {
