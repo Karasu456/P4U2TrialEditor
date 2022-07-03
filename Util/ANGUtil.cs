@@ -10,42 +10,49 @@ namespace P4U2TrialEditor.Util
     public static class ANGUtil
     {
         /// <summary>
+        /// Rotate left byte
+        /// </summary>
+        /// <param name="x">Byte value</param>
+        /// <param name="n">Bit count to rotate</param>
+        /// <returns></returns>
+        private static byte __rol(byte x, byte n)
+        {
+            return (byte)((x << n) | (x >> (8 - n)));
+        }
+
+        /// <summary>
         /// ANG cryptography algorithm.
         /// (Reverse engineering done by Geo)
         /// </summary>
-        /// <param name="src">Source buffer</param>
-        /// <param name="dst">Destination buffer</param>
+        /// <param name="buf">Source buffer</param>
         /// <param name="encrypt">Whether to encrypt/decrypt</param>
-        private static void ANGCrypt(in byte[] src, ref byte[] dst, bool encrypt)
+        private static void ANGCrypt(byte[] buf, bool encrypt)
         {
-            Debug.Assert(src.Length == dst.Length);
-
             byte key = 0x7B;
-            for (int i = 0; i < src.Length; i++)
+            for (int i = 0; i < buf.Length; i++)
             {
-                dst[i] = (byte)(BitOperations.RotateLeft(key, 1) ^ src[i] ^ i);
-                key = encrypt ? dst[i] : src[i];
+                byte dec = (byte)(__rol(key, 1) ^ buf[i] ^ i);
+                key = encrypt ? dec : buf[i];
+                buf[i] = dec;
             }
         }
 
         /// <summary>
         /// Encrypt data with ANG algorithm.
         /// </summary>
-        /// <param name="src">Source buffer</param>
-        /// <param name="dst">Destination buffer</param>
-        public static void ANGEncrypt(in byte[] src, ref byte[] dst)
+        /// <param name="buf">Source buffer</param>
+        public static void ANGEncrypt(byte[] buf)
         {
-            ANGCrypt(src, ref dst, true);
+            ANGCrypt(buf, true);
         }
 
         /// <summary>
         /// Decrypt data with ANG algorithm.
         /// </summary>
-        /// <param name="src">Source buffer</param>
-        /// <param name="dst">Destination buffer</param>
-        public static void ANGDecrypt(in byte[] src, ref byte[] dst)
+        /// <param name="buf">Source buffer</param>
+        public static void ANGDecrypt(byte[] buf)
         {
-            ANGCrypt(src, ref dst, false);
+            ANGCrypt(buf, false);
         }
     }
 }
