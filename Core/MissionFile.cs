@@ -155,51 +155,64 @@ namespace P4U2TrialEditor.Core
         /// <returns>Success</returns>
         public bool Write(string path)
         {
-            try
-            {
-                // Build text data
-                StringBuilder builder = new StringBuilder();
+            // Build text data
+            StringBuilder builder = new StringBuilder();
 
-                // Lesson data
-                builder.Append("----Lesson----");
-                foreach (Mission m in m_Lessons)
+            // Lesson data
+            builder.AppendLine("----Lesson----");
+            foreach (Mission m in m_Lessons)
+            {
+                builder.AppendJoin("\n", m.GetRawText());
+                builder.AppendLine();
+            }
+            builder.AppendLine();
+
+            // Trial data
+            for (int i = 0; i < (int)CharacterUtil.EChara.COMMON; i++)
+            {
+                CharacterUtil.EChara chara = (CharacterUtil.EChara)i;
+                builder.AppendLine(String.Format("----Char---- {0}",
+                    CharacterUtil.GetCharaResID(chara)));
+
+                foreach (Mission m in m_Trials[chara])
                 {
                     builder.AppendJoin("\n", m.GetRawText());
+                    builder.AppendLine();
                 }
 
-                // Trial data
-                for (int i = 0; i < (int)CharacterUtil.EChara.COMMON; i++)
-                {
-                    CharacterUtil.EChara chara = (CharacterUtil.EChara)i;
-                    builder.Append(String.Format("----Char---- {0}",
-                        CharacterUtil.GetCharaResID(chara)));
+                builder.AppendLine();
+            }
+            builder.AppendLine();
 
-                    foreach (Mission m in m_Trials[chara])
-                    {
-                        builder.AppendJoin("\n", m.GetRawText());
-                    }
-                }
+            // End of file
+            builder.AppendLine("----End----");
 
+            try
+            {
                 // Write plaintext data
                 File.WriteAllText(path, builder.ToString());
 
                 // Encrypt data accordingly
-                using (FileStream strm = new FileStream(path, FileMode.Create))
+                if (m_Encryption != Encryption.NONE)
                 {
                     switch (m_Encryption)
                     {
-                        case Encryption.NONE:
-                            break;
                         case Encryption.ANG:
                             using (ANGStream astrm = new ANGStream(path, ANGStream.Mode.ENCRYPT))
                             {
-                                astrm.WriteTo(strm);
+                                using (FileStream strm = new FileStream(path, FileMode.Create))
+                                {
+                                    astrm.WriteTo(strm);
+                                }
                             }
                             break;
                         case Encryption.MD5:
                             using (MD5Stream mstrm = new MD5Stream("data/trial/trial.ang", path))
                             {
-                                mstrm.WriteTo(strm);
+                                using (FileStream strm = new FileStream(path, FileMode.Create))
+                                {
+                                    mstrm.WriteTo(strm);
+                                }
                             }
                             break;
                         case Encryption.MD5_ANG:
@@ -207,17 +220,28 @@ namespace P4U2TrialEditor.Core
                             {
                                 using (MD5Stream mstrm = new MD5Stream("data/trial/trial.ang", astrm.ToArray()))
                                 {
-                                    mstrm.WriteTo(strm);
+                                    using (FileStream strm = new FileStream(path, FileMode.Create))
+                                    {
+                                        mstrm.WriteTo(strm);
+                                    }
                                 }
                             }
+                            break;
+                        default:
+                            Debug.Assert(false);
                             break;
                     }
                 }
 
                 return true;
             }
-            catch (Exception)
+            catch (IOException e)
             {
+                MessageBox.Show(
+                    e.Message,
+                    "Unable to Save",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 return false;
             }
         }

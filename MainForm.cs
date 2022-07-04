@@ -342,7 +342,8 @@ namespace P4U2TrialEditor
             {
                 // Query file to save
                 SaveFileDialog dialog = new SaveFileDialog();
-                dialog.FileName = "Select a trial file";
+                dialog.FileName = (m_OpenFileName != null)
+                    ? m_OpenFileName : "trial.txt";
                 dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
 
                 if (dialog.ShowDialog() == DialogResult.OK)
