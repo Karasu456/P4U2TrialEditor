@@ -56,6 +56,8 @@ namespace P4U2TrialEditor
                 m_OpenFileName, enc);
         }
 
+        #region Open/Close File
+
         /// <summary>
         /// Attempt to open mission file from path
         /// </summary>
@@ -99,14 +101,10 @@ namespace P4U2TrialEditor
             // Prompt the user to save if they still have unsaved changes
             if (m_FileDirty)
             {
-                switch (MessageBox.Show("Would you like to save your changes to this file?",
-                    "Unsaved Changes",
-                    MessageBoxButtons.YesNoCancel,
-                    MessageBoxIcon.Question,
-                    MessageBoxDefaultButton.Button3))
+                switch (ShowFileDirtyMsg())
                 {
                     case DialogResult.Yes:
-                        m_OpenFile.Write(m_OpenFilePath!);
+                        m_OpenFile.Write(GetSaveFilePath());
                         m_FileDirty = false;
                         break;
                     case DialogResult.No:
@@ -157,6 +155,47 @@ namespace P4U2TrialEditor
             UpdateTitle();
         }
 
+        #endregion Open/Close File
+
+        #region Save File
+
+        /// <summary>
+        /// Determine where the current file should be saved.
+        /// </summary>
+        /// <returns>Save file path</returns>
+        private string GetSaveFilePath()
+        {
+            // Newly created files have no filepath set
+            if (m_OpenFilePath != null)
+            {
+                return m_OpenFilePath;
+            }
+
+            // Query file to save
+            SaveFileDialog dialog = new SaveFileDialog();
+            dialog.FileName = (m_OpenFileName != null)
+                ? m_OpenFileName : "trial.txt";
+            dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
+            dialog.ShowDialog();
+            return dialog.FileName;
+        }
+
+        /// <summary>
+        /// Prompt the user if they would like to save changes to the current file.
+        /// </summary>
+        /// <returns>Dialog box result</returns>
+        private DialogResult ShowFileDirtyMsg()
+        {
+            return MessageBox.Show(
+                "Would you like to save your changes to this file?",
+                "Unsaved Changes",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button3);
+        }
+
+        #endregion Save File
+
         #region Form Events
 
         /// <summary>
@@ -167,12 +206,35 @@ namespace P4U2TrialEditor
         /// <param name="e"></param>
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
-
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (m_OpenFile == null)
+            {
+                return;
+            }
 
+            // Prompt the user to save if they still have unsaved changes
+            if (m_FileDirty)
+            {
+                switch (ShowFileDirtyMsg())
+                {
+                    case DialogResult.Yes:
+                        m_OpenFile.Write(GetSaveFilePath());
+                        m_FileDirty = false;
+                        break;
+                    case DialogResult.No:
+                        m_FileDirty = false;
+                        break;
+                    case DialogResult.Cancel:
+                        // Stop window from closing
+                        e.Cancel = true;
+                        break;
+                    default:
+                        goto case DialogResult.Cancel;
+                }
+            }
         }
 
         #endregion Form Events
@@ -189,14 +251,10 @@ namespace P4U2TrialEditor
             // Prompt the user to save if they still have unsaved changes
             if (m_OpenFile != null && m_FileDirty)
             {
-                switch (MessageBox.Show("Would you like to save your changes to this file?",
-                    "Unsaved Changes",
-                    MessageBoxButtons.YesNoCancel,
-                    MessageBoxIcon.Question,
-                    MessageBoxDefaultButton.Button3))
+                switch (ShowFileDirtyMsg())
                 {
                     case DialogResult.Yes:
-                        m_OpenFile.Write(m_OpenFilePath!);
+                        m_OpenFile.Write(GetSaveFilePath());
                         m_FileDirty = false;
                         break;
                     case DialogResult.No:
@@ -247,22 +305,7 @@ namespace P4U2TrialEditor
         {
             if (m_OpenFile != null)
             {
-                // Newly created files have no filepath set
-                string? path = m_OpenFilePath;
-                if (path == null)
-                {
-                    // Query file to save
-                    SaveFileDialog dialog = new SaveFileDialog();
-                    dialog.FileName = "Select a trial file";
-                    dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
-
-                    if (dialog.ShowDialog() == DialogResult.OK)
-                    {
-                        path = dialog.FileName;
-                    }
-                }
-
-                m_OpenFile.Write(path!);
+                m_OpenFile.Write(GetSaveFilePath());
                 m_FileDirty = false;
             }
         }
