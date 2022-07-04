@@ -140,8 +140,13 @@ namespace P4U2TrialEditor.Core
                 err = Error.DESERIALIZE_FAIL;
                 return file;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                MessageBox.Show(
+                    e.Message,
+                    "Unable to Open",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 err = Error.IO_FAIL;
                 return null;
             }
