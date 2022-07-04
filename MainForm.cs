@@ -350,6 +350,13 @@ namespace P4U2TrialEditor
                 {
                     m_OpenFile.Write(dialog.FileName);
                     m_FileDirty = false;
+
+                    // Change to new filename
+                    m_OpenFilePath = dialog.FileName;
+                    m_OpenFileName = Path.GetFileName(m_OpenFilePath);
+                    // Adjust text referencing filename
+                    m_MissionView.SetRootNode(m_OpenFileName);
+                    UpdateTitle();
                 }
             }
         }
