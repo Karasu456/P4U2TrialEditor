@@ -177,7 +177,11 @@ namespace P4U2TrialEditor
                 ? m_OpenFileName : "trial.txt";
             dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
             dialog.ShowDialog();
-            return dialog.FileName;
+
+            // Set and return path
+            m_OpenFilePath = dialog.FileName;
+            m_OpenFileName = Path.GetFileName(m_OpenFilePath);
+            return m_OpenFilePath;
         }
 
         /// <summary>
@@ -192,6 +196,20 @@ namespace P4U2TrialEditor
                 MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Question,
                 MessageBoxDefaultButton.Button3);
+        }
+
+        /// <summary>
+        /// Save changes to the mission being edited in the textbox.
+        /// </summary>
+        private void SaveTextBoxData()
+        {
+            if (m_CurrentMission != null)
+            {
+                // Overwrite script contents
+                m_CurrentMission.GetRawText().Clear();
+                m_CurrentMission.GetRawText().AddRange(
+                    m_MissionTextBox.Text.Split('\n'));
+            }
         }
 
         #endregion Save File
@@ -331,6 +349,8 @@ namespace P4U2TrialEditor
         {
             if (m_OpenFile != null)
             {
+                // Save changes currently selected mission
+                SaveTextBoxData();
                 m_OpenFile.Write(GetSaveFilePath());
                 m_FileDirty = false;
             }
@@ -348,6 +368,8 @@ namespace P4U2TrialEditor
 
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
+                    // Save changes currently selected mission
+                    SaveTextBoxData();
                     m_OpenFile.Write(dialog.FileName);
                     m_FileDirty = false;
 
@@ -394,14 +416,7 @@ namespace P4U2TrialEditor
         /// <param name="e"></param>
         private void MissionView_BeforeSelect(object sender, TreeViewCancelEventArgs e)
         {
-            // Preserve unsaved changes to the current mission
-            if (m_CurrentMission != null)
-            {
-                // Overwrite script contents
-                m_CurrentMission.GetRawText().Clear();
-                m_CurrentMission.GetRawText().AddRange(
-                    m_MissionTextBox.Text.Split('\n'));
-            }
+            SaveTextBoxData();
         }
 
         /// <summary>
