@@ -38,7 +38,7 @@
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.m_MissionView = new System.Windows.Forms.TreeView();
+            this.m_MissionView = new P4U2TrialEditor.UI.MissionTreeView();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.m_MissionTextBox = new System.Windows.Forms.RichTextBox();
             this.menuStrip1.SuspendLayout();
@@ -80,6 +80,7 @@
             this.newToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N)));
             this.newToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.newToolStripMenuItem.Text = "New";
+            this.newToolStripMenuItem.Click += new System.EventHandler(this.newToolStripMenuItem_Click);
             // 
             // openToolStripMenuItem
             // 
@@ -95,6 +96,7 @@
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
             this.saveToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.saveToolStripMenuItem.Text = "Save";
+            this.saveToolStripMenuItem.Click += new System.EventHandler(this.saveToolStripMenuItem_Click);
             // 
             // saveAsToolStripMenuItem
             // 
@@ -103,12 +105,14 @@
             | System.Windows.Forms.Keys.S)));
             this.saveAsToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.saveAsToolStripMenuItem.Text = "Save As...";
+            this.saveAsToolStripMenuItem.Click += new System.EventHandler(this.saveAsToolStripMenuItem_Click);
             // 
             // closeToolStripMenuItem
             // 
             this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
             this.closeToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.closeToolStripMenuItem.Text = "Close";
+            this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -136,6 +140,7 @@
             // m_MissionView
             // 
             this.m_MissionView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_MissionView.Enabled = false;
             this.m_MissionView.Location = new System.Drawing.Point(0, 0);
             this.m_MissionView.Name = "m_MissionView";
             this.m_MissionView.Size = new System.Drawing.Size(175, 426);
@@ -170,15 +175,17 @@
             this.m_MissionTextBox.Text = resources.GetString("m_MissionTextBox.Text");
             this.m_MissionTextBox.TextChanged += new System.EventHandler(this.MissionTextBox_TextChanged);
             // 
-            // Form1
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.menuStrip1);
-            this.Name = "Form1";
+            this.Name = "MainForm";
             this.Text = "P4U2 Trial Editor";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
+            this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.splitContainer1.Panel1.ResumeLayout(false);
@@ -197,7 +204,6 @@
 
         private MenuStrip menuStrip1;
         private SplitContainer splitContainer1;
-        private TreeView m_MissionView;
         private SplitContainer splitContainer2;
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem newToolStripMenuItem;
@@ -207,5 +213,6 @@
         private ToolStripMenuItem saveAsToolStripMenuItem;
         private ToolStripMenuItem closeToolStripMenuItem;
         private RichTextBox m_MissionTextBox;
+        private UI.MissionTreeView m_MissionView;
     }
 }

@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text;
-using System.IO;
 using P4U2TrialEditor.Core;
 using P4U2TrialEditor.Util;
+using P4U2TrialEditor.UI;
 
 namespace P4U2TrialEditor
 {
@@ -15,6 +15,9 @@ namespace P4U2TrialEditor
         // Name of currently open file
         private string? m_OpenFileName = null;
 
+        // Whether there are unsaved changes to the file
+        private bool m_FileDirty = false;
+
         // Currently selected mission
         private Mission? m_CurrentMission = null;
 
@@ -24,11 +27,41 @@ namespace P4U2TrialEditor
         }
 
         /// <summary>
+        /// Update window title.
+        /// The title displays the filename and the file's encryption type.
+        /// </summary>
+        private void UpdateTitle()
+        {
+            if (m_OpenFile == null)
+            {
+                Text = "P4U2 Trial Editor";
+                return;
+            }
+
+            string[] enc2str =
+            {
+                "TEXT",
+                "ANG",
+                "MD5",
+                "MD5 + ANG",
+            };
+
+            // File encryption type
+            string enc = (m_OpenFile != null)
+                ? String.Format("({0})", enc2str[(int)m_OpenFile.GetEncryption()])
+                : String.Empty;
+
+            // Window title
+            Text = String.Format("P4U2 Trial Editor - {0} {1}",
+                m_OpenFileName, enc);
+        }
+
+        /// <summary>
         /// Attempt to open mission file from path
         /// </summary>
         /// <param name="path">Path to mission file</param>
         /// <returns></returns>
-        private bool Open(string path)
+        private bool OpenFile(string path)
         {
             MissionFile.Error err;
             m_OpenFile = MissionFile.Open(path, out err);
@@ -49,105 +82,139 @@ namespace P4U2TrialEditor
 
             m_OpenFilePath = path;
             m_OpenFileName = Path.GetFileName(m_OpenFilePath);
-            UpdateTreeView();
+            OnOpenFile();
             return true;
         }
 
         /// <summary>
-        /// Update tree view of mission file
+        /// Close the currently open file
         /// </summary>
-        private void UpdateTreeView()
+        private void CloseFile()
         {
             if (m_OpenFile == null)
             {
                 return;
             }
 
-            m_MissionView.BeginUpdate();
+            // Prompt the user to save if they still have unsaved changes
+            if (m_FileDirty)
             {
-                // Remove existing nodes
-                m_MissionView.Nodes.Clear();
-
-                // Root node displays filename
-                string rootName = (m_OpenFileName != null)
-                    ? m_OpenFileName : "Trial Script";
-                m_MissionView.Nodes.Add(rootName);
-                TreeNode rootNode = m_MissionView.Nodes[0];
-
-                // Lesson Mode
-                rootNode.Nodes.Add("Lessons");
-                TreeNode lessonRootNode = rootNode.Nodes[0];
-                foreach (Mission m in m_OpenFile.GetLessons())
+                switch (MessageBox.Show("Would you like to save your changes to this file?",
+                    "Unsaved Changes",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button3))
                 {
-                    lessonRootNode.Nodes.Add(String.Format("Lesson {0}", m.GetID()));
-                }
-
-                // Challenge Mode (trials)
-                rootNode.Nodes.Add("Trials");
-                TreeNode trialRootNode = rootNode.Nodes[1];
-                for (int i = 0; i < (int)CharacterUtil.EChara.COMMON; i++)
-                {
-                    // Character root node
-                    trialRootNode.Nodes.Add(String.Format("{0} ({1})",
-                        CharacterUtil.GetCharaName((CharacterUtil.EChara)i),
-                        CharacterUtil.GetCharaResID((CharacterUtil.EChara)i)));
-                    TreeNode charaRootNode = trialRootNode.Nodes[i];
-
-                    // Character trials
-                    foreach (Mission m
-                        in m_OpenFile.GetCharaTrials((CharacterUtil.EChara)i))
-                    {
-                        charaRootNode.Nodes.Add(String.Format("Trial {0}", m.GetID()));
-                    }
+                    case DialogResult.Yes:
+                        m_OpenFile.Write(m_OpenFilePath!);
+                        m_FileDirty = false;
+                        break;
+                    case DialogResult.No:
+                        m_FileDirty = false;
+                        break;
+                    case DialogResult.Cancel:
+                    default:
+                        return;
                 }
             }
-            m_MissionView.EndUpdate();
+
+            m_OpenFile = null;
+            m_OpenFilePath = null;
+            m_OpenFileName = null;
+            OnCloseFile();
         }
 
         /// <summary>
-        /// Attempt to find mission data given a node from the tree-view
+        /// Open file callback
         /// </summary>
-        /// <param name="node">Tree-view node</param>
-        /// <returns>Mission data from node</returns>
-        public Mission? GetMissionFromTreeNode(TreeNode node)
+        private void OnOpenFile()
         {
-            // No file is open
-            if (m_OpenFile == null)
-            {
-                return null;
-            }
+            // Update tree view
+            m_MissionView.SetRootNode(m_OpenFileName!);
+            m_MissionView.OpenFile(m_OpenFile!);
+    
+            // Clear text editor
+            m_MissionTextBox.Clear();
 
-            // Find which mission was selected
-            string[] nodes = node.FullPath.Split(
-                m_MissionView.PathSeparator);
+            // Update window title
+            UpdateTitle();
+        }
 
-            // Check for at least path to Lesson/Trial root node
-            if (nodes.Length < 3)
-            {
-                return null;
-            }
+        /// <summary>
+        /// Close file callback
+        /// </summary>
+        private void OnCloseFile()
+        {
+            // Update tree view
+            m_MissionView.CloseFile();
 
-            // Path < 4 means it can't be a trial mission
-            if (nodes.Length < 4)
+            // Disable text editor
+            m_MissionTextBox.Clear();
+            m_MissionTextBox.ReadOnly = true;
+            m_MissionTextBox.Enabled = false;
+
+            // Update window title
+            UpdateTitle();
+        }
+
+        #region Form Events
+
+        /// <summary>
+        /// DragDrop event handler.
+        /// Allow user to drag and drop file.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MainForm_DragDrop(object sender, DragEventArgs e)
+        {
+
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+
+        }
+
+        #endregion Form Events
+
+        #region Menu Tool Strip
+
+        /// <summary>
+        /// ToolStripMenu callback for "New" option
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void newToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Prompt the user to save if they still have unsaved changes
+            if (m_OpenFile != null && m_FileDirty)
             {
-                if (nodes[1] == "Lessons")
+                switch (MessageBox.Show("Would you like to save your changes to this file?",
+                    "Unsaved Changes",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button3))
                 {
-                    int lessonId = int.Parse(nodes[2].Split().Last()) - 1;
-                    return m_OpenFile.GetLessons()[lessonId];
+                    case DialogResult.Yes:
+                        m_OpenFile.Write(m_OpenFilePath!);
+                        m_FileDirty = false;
+                        break;
+                    case DialogResult.No:
+                        m_FileDirty = false;
+                        break;
+                    case DialogResult.Cancel:
+                    default:
+                        return;
                 }
             }
-            else if (nodes[1] == "Trials")
-            {
-                // Character resource ID
-                string resId = nodes[2].Split().Last();
-                resId = resId.Replace("(", "").Replace(")", "");
-                // Get enum value from res ID
-                CharacterUtil.EChara chara = CharacterUtil.GetCharaEnum(resId);
-                int trialId = int.Parse(nodes[3].Split().Last()) - 1;
-                return m_OpenFile.GetCharaTrials(chara)[trialId];
-            }
 
-            return null;
+            // Close existing file and create a new empty file
+            CloseFile();
+            m_OpenFile = new MissionFile();
+            m_OpenFile.MakeEmpty();
+            m_OpenFileName = "New Trial Script";
+            m_FileDirty = true;
+            OnOpenFile();
         }
 
         /// <summary>
@@ -160,13 +227,88 @@ namespace P4U2TrialEditor
             // Query file to open
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.FileName = "Select a trial file";
-            dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
+            // Default filter includes the MD5 hashed version
+            dialog.Filter = "Trial script (*.txt/*.ang)" +
+                "|*.txt;*.ang;1b1df6db6ea1d4af300ae30c7bbab937*" +
+                "|All files|*.*";
 
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                Open(dialog.FileName);
+                OpenFile(dialog.FileName);
             }
         }
+
+        /// <summary>
+        /// ToolStripMenu callback for "Save" option
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void saveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (m_OpenFile != null)
+            {
+                // Newly created files have no filepath set
+                string? path = m_OpenFilePath;
+                if (path == null)
+                {
+                    // Query file to save
+                    SaveFileDialog dialog = new SaveFileDialog();
+                    dialog.FileName = "Select a trial file";
+                    dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
+
+                    if (dialog.ShowDialog() == DialogResult.OK)
+                    {
+                        path = dialog.FileName;
+                    }
+                }
+
+                m_OpenFile.Write(path!);
+                m_FileDirty = false;
+            }
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (m_OpenFile != null)
+            {
+                // Query file to save
+                SaveFileDialog dialog = new SaveFileDialog();
+                dialog.FileName = "Select a trial file";
+                dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    m_OpenFile.Write(dialog.FileName);
+                    m_FileDirty = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// ToolStripMenu callback for "Close" option
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CloseFile();
+        }
+
+        #endregion Menu Tool Strip
+
+        #region Mission Text Box
+
+        private void MissionTextBox_TextChanged(object sender, EventArgs e)
+        {
+            if (Enabled)
+            {
+                m_FileDirty = true;
+            }
+        }
+
+        #endregion Mission Text Box
+
+        #region Mission Tree View
 
         /// <summary>
         /// Callback for when the user is selecting a mission from the tree-view.
@@ -202,31 +344,24 @@ namespace P4U2TrialEditor
             e.Node.BackColor = SystemColors.HighlightText;
 
             // Get selected mission
-            Mission? selected = GetMissionFromTreeNode(e.Node);
+            Mission? selected = m_MissionView.GetMission(e.Node);
             // If no mission is selected, don't deselect the current one
             m_CurrentMission = (selected == null) ? m_CurrentMission : selected;
 
-            // Sanity check
-            Debug.Assert(m_CurrentMission != null);
-            if (m_CurrentMission == null)
+            if (m_CurrentMission != null)
             {
-                return;
+                // Load new mission script
+                StringBuilder builder = new StringBuilder();
+                builder.AppendJoin('\n', m_CurrentMission.GetRawText());
+                m_MissionTextBox.Clear();
+                m_MissionTextBox.Text = builder.ToString();
+
+                // Allow text box input
+                m_MissionTextBox.ReadOnly = false;
+                m_MissionTextBox.Enabled = true;
             }
-
-            // Load new mission script
-            StringBuilder builder = new StringBuilder();
-            builder.AppendJoin('\n', m_CurrentMission.GetRawText());
-            m_MissionTextBox.Clear();
-            m_MissionTextBox.Text = builder.ToString();
-
-            // Allow text box input
-            m_MissionTextBox.ReadOnly = false;
-            m_MissionTextBox.Enabled = true;
         }
 
-        private void MissionTextBox_TextChanged(object sender, EventArgs e)
-        {
-
-        }
+        #endregion Mission Tree View
     }
 }

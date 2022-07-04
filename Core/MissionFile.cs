@@ -223,6 +223,38 @@ namespace P4U2TrialEditor.Core
         }
 
         /// <summary>
+        /// Initialize empty mission data
+        /// </summary>
+        public void MakeEmpty()
+        {
+            // Lessons 1-60
+            m_Lessons.Clear();
+            m_Lessons = new List<Mission>(60);
+            for (int i = 0; i < 60; i++)
+            {
+                Mission m = new Mission();
+                m.SetID(i + 1);
+                m_Lessons.Add(m);
+            }
+
+            // Trials 0-30 for each character
+            m_Trials.Clear();
+            m_Trials = new Dictionary<CharacterUtil.EChara, List<Mission>>();
+            for (int i = 0; i < (int)CharacterUtil.EChara.COMMON; i++)
+            {
+                CharacterUtil.EChara chara = (CharacterUtil.EChara)i;
+                m_Trials[chara] = new List<Mission>(30);
+                for (int j = 0; j < 30; j++)
+                {
+                    Mission m = new Mission();
+                    m.SetID(j + 1);
+                    m.SetCharacter(chara);
+                    m_Trials[chara].Add(m);
+                }
+            }
+        }
+
+        /// <summary>
         /// Deserialize mission file from text form.
         /// </summary>
         /// <param name="reader">Stream to script</param>
