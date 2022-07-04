@@ -199,6 +199,19 @@ namespace P4U2TrialEditor
         #region Form Events
 
         /// <summary>
+        /// DragEnter event handler.
+        /// Allow user to drag and drop file.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void MainForm_DragEnter(object sender, DragEventArgs e)
+        {
+            // Allow user to drag files onto the window
+            e.Effect = (e.Data != null && e.Data.GetDataPresent(DataFormats.FileDrop))
+                ? DragDropEffects.Link : DragDropEffects.None;
+        }
+
+        /// <summary>
         /// DragDrop event handler.
         /// Allow user to drag and drop file.
         /// </summary>
@@ -206,8 +219,21 @@ namespace P4U2TrialEditor
         /// <param name="e"></param>
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
+            // Open files dropped onto the window
+            if (e.Data != null)
+            {
+                string[] data = (string[])e.Data.GetData(DataFormats.FileDrop);
+                OpenFile(data[0]);
+            }
         }
 
+        /// <summary>
+        /// FormClosing event handler.
+        /// Allows user to cancel the close operation,
+        /// or save/delete changes to the current file before closing.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (m_OpenFile == null)

@@ -89,6 +89,7 @@ namespace P4U2TrialEditor.UI
         {
             SetFile(file);
             Rebuild();
+            CollapseAll();
             Enabled = true;
         }
 
@@ -108,6 +109,7 @@ namespace P4U2TrialEditor.UI
                 {
                     chara.Nodes.Clear();
                 }
+                CollapseAll();
             }
             EndUpdate();
 
