@@ -396,7 +396,7 @@ namespace P4U2TrialEditor
 
         #region Mission Text Box
 
-        private void MissionTextBox_TextChanged(object sender, EventArgs e)
+        private void MissionTextBox_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (Enabled)
             {

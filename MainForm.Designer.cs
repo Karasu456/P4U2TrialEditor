@@ -173,7 +173,7 @@
             this.m_MissionTextBox.Size = new System.Drawing.Size(248, 426);
             this.m_MissionTextBox.TabIndex = 0;
             this.m_MissionTextBox.Text = resources.GetString("m_MissionTextBox.Text");
-            this.m_MissionTextBox.TextChanged += new System.EventHandler(this.MissionTextBox_TextChanged);
+            this.m_MissionTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MissionTextBox_KeyPress);
             // 
             // MainForm
             // 
