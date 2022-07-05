@@ -187,9 +187,10 @@ namespace P4U2TrialEditor.Core
                 }
 
                 // Parse optional sections
-                if (reader.PeekLine() != null)
+                string? section = reader.PeekLine();
+                if (section != null)
                 {
-                    switch (reader.PeekLine()!.Trim())
+                    switch (section.Trim())
                     {
                         // Trial demonstration
                         case "-KEY-":
@@ -244,16 +245,10 @@ namespace P4U2TrialEditor.Core
             }
 
             // Read until action list header
-            while (reader.PeekLine() != null
+            while (!reader.EndOfStream
                 && reader.PeekLine() != "-LIST-")
             {
-                // Parse mission flags/settings
-                // (BB engine ignores invalid tokens)
-                if (!ParseMissionFlag(reader))
-                {
-                    Console.WriteLine("Invalid mission flag: \"{0}\"", reader.PeekLine()!);
-                }
-
+                ParseMissionFlag(reader);
                 reader.Trim();
             }
 
@@ -268,17 +263,21 @@ namespace P4U2TrialEditor.Core
         /// <returns>Success</returns>
         private bool ParseMissionHeader(StreamReaderEx reader)
         {
+            if (reader.EndOfStream)
+            {
+                return false;
+            }
+
             // Validate header
-            // (NOTE: Only called from ParseMissionSection,
-            // we know the stream cannot be empty yet)
-            if (!reader.PeekLine()!.Trim().StartsWith("-MISSION-"))
+            string header = reader.ReadLine()!;
+            if (!header.Trim().StartsWith("-MISSION-"))
             {
                 return false;
             }
 
             // Mission ID
             int id;
-            string[] tokens = reader.ReadLine()!.Split();
+            string[] tokens = header.Split();
             if (tokens.Length != 2
                 || !int.TryParse(tokens[1], out id))
             {
@@ -301,18 +300,18 @@ namespace P4U2TrialEditor.Core
                 return false;
             }
 
+            string flag = reader.ReadLine()!;
+
             // Ignore whitespace and comments
-            if (string.IsNullOrWhiteSpace(reader.PeekLine())
-                || reader.PeekLine()! == string.Empty
-                || reader.PeekLine()!.TrimStart().StartsWith("//"))
+            if (string.IsNullOrWhiteSpace(flag)
+                || flag == string.Empty
+                || flag.TrimStart().StartsWith("//"))
             {
-                // TO-DO: Refactor
-                reader.ReadLine();
                 return true;
             }
 
             int val;
-            string[] tokens = reader.ReadLine()!.Split();
+            string[] tokens = flag.Split();
 
             switch (tokens[0])
             {
@@ -621,11 +620,10 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse actions until next section (or end of mission)
-            while (reader.PeekLine() != null
+            while (!reader.EndOfStream
                 && reader.PeekLine()! != string.Empty
                 && reader.PeekLine()![0] != '-')
             {
-                // BB engine ignores invalid tokens
                 ParseAction(reader);
             }
 
@@ -645,15 +643,17 @@ namespace P4U2TrialEditor.Core
                 return false;
             }
 
+            string action = reader.ReadLine()!;
+
             // Ignore whitespace and comments
-            if (string.IsNullOrWhiteSpace(reader.PeekLine()!)
-                || reader.PeekLine()! == string.Empty
-                || reader.PeekLine()!.TrimStart().StartsWith("//"))
+            if (string.IsNullOrWhiteSpace(action)
+                || action == string.Empty
+                || action.TrimStart().StartsWith("//"))
             {
                 return true;
             }
 
-            string[] tokens = reader.ReadLine()!.Split();
+            string[] tokens = action.Split();
 
             // Initial action
             Action act = new Action();
@@ -772,16 +772,11 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse actions until next section (or end of mission)
-            while (reader.PeekLine() != null
+            while (!reader.EndOfStream
                 && reader.PeekLine()! != string.Empty
                 && reader.PeekLine()![0] != '-')
             {
-                // BB engine ignores invalid key data, so we only warn
-                if (!ParseKey(reader, Key.Type.PLAYER))
-                {
-                    Console.WriteLine("Invalid key format: \"{0}\"",
-                        reader.PeekLine()!);
-                }
+                ParseKey(reader, Key.Type.PLAYER);
             }
 
             return true;
@@ -806,16 +801,11 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse actions until next section (or end of mission)
-            while (reader.PeekLine() != null
+            while (!reader.EndOfStream
                 && reader.PeekLine()! != string.Empty
                 && reader.PeekLine()![0] != '-')
             {
-                // BB engine ignores invalid key data, so we only warn
-                if (!ParseKey(reader, Key.Type.ENEMY))
-                {
-                    Console.WriteLine("Invalid key format: \"{0}\"",
-                        reader.PeekLine()!);
-                }
+                ParseKey(reader, Key.Type.ENEMY);
             }
 
             return true;
@@ -833,6 +823,7 @@ namespace P4U2TrialEditor.Core
             {
                 return false;
             }
+
             string key = reader.ReadLine()!;
 
             // Ignore whitespace and comments

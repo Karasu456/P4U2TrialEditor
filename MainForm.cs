@@ -71,7 +71,6 @@ namespace P4U2TrialEditor
             switch(err)
             {
                 case MissionFile.Error.IO_FAIL:
-                    MessageBox.Show("The file could not be opened.", "File Error");
                     m_OpenFilePath = null;
                     m_OpenFileName = null;
                     return false;

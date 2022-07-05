@@ -334,7 +334,7 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse lessons until trial header (or EOF)
-            while (reader.PeekLine() != null
+            while (!reader.EndOfStream
                 && !reader.PeekLine()!.StartsWith("----Char----")
                 && reader.PeekLine()!.Trim() != ("----End----"))
             {
@@ -371,7 +371,7 @@ namespace P4U2TrialEditor.Core
             }
 
             // Parse lessons until trial header (or EOF)
-            while (reader.PeekLine() != null
+            while (!reader.EndOfStream
                 && reader.PeekLine()!.StartsWith("----Char----")
                 && reader.PeekLine()!.Trim() != ("----End----"))
             {
@@ -410,7 +410,7 @@ namespace P4U2TrialEditor.Core
             Debug.Assert(chara != CharacterUtil.EChara.COMMON);
 
             // Parse lessons until trial header (or EOF)
-            while (reader.PeekLine() != null
+            while (!reader.EndOfStream
                 && !reader.PeekLine()!.StartsWith("----Char----")
                 && reader.PeekLine()!.Trim() != ("----End----"))
             {
