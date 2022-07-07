@@ -177,9 +177,25 @@ namespace P4U2TrialEditor
             dialog.Filter = "Trial script (*.txt/*.ang)|*.txt;*.ang|All files|*.*";
             dialog.ShowDialog();
 
-            // Set and return path
+            // Set new filepath
             m_OpenFilePath = dialog.FileName;
             m_OpenFileName = Path.GetFileName(m_OpenFilePath);
+
+            // Change encryption based on file extension
+            switch(Path.GetExtension(m_OpenFilePath).ToLower())
+            {
+                case ".txt":
+                    m_OpenFile.SetEncryption(MissionFile.Encryption.NONE);
+                    break;
+                case ".ang":
+                    m_OpenFile.SetEncryption(MissionFile.Encryption.ANG);
+                    break;
+                // TO-DO: Fix MD5
+                default:
+                    m_OpenFile.SetEncryption(MissionFile.Encryption.NONE);
+                    break;
+            }
+
             return m_OpenFilePath;
         }
 
@@ -367,17 +383,35 @@ namespace P4U2TrialEditor
 
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    // Save changes currently selected mission
+                    // Save changes to currently selected mission
                     SaveTextBoxData();
-                    m_OpenFile.Write(dialog.FileName);
-                    m_FileDirty = false;
 
                     // Change to new filename
                     m_OpenFilePath = dialog.FileName;
                     m_OpenFileName = Path.GetFileName(m_OpenFilePath);
+
+                    // Change encryption based on file extension
+                    switch (Path.GetExtension(m_OpenFilePath).ToLower())
+                    {
+                        case ".txt":
+                            m_OpenFile.SetEncryption(MissionFile.Encryption.NONE);
+                            break;
+                        case ".ang":
+                            m_OpenFile.SetEncryption(MissionFile.Encryption.ANG);
+                            break;
+                        // TO-DO: Fix MD5
+                        default:
+                            m_OpenFile.SetEncryption(MissionFile.Encryption.NONE);
+                            break;
+                    }
+
                     // Adjust text referencing filename
                     m_MissionView.SetRootNode(m_OpenFileName);
                     UpdateTitle();
+
+                    // Write file
+                    m_OpenFile.Write(dialog.FileName);
+                    m_FileDirty = false;
                 }
             }
         }

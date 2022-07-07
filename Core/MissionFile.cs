@@ -73,6 +73,11 @@ namespace P4U2TrialEditor.Core
             return m_Encryption;
         }
 
+        public void SetEncryption(Encryption enc)
+        {
+            m_Encryption = enc;
+        }
+
         #endregion Accessors
 
         #region ArcSys Format
