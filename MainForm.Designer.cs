@@ -40,6 +40,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.m_MissionView = new P4U2TrialEditor.UI.MissionTreeView();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
+            this.m_MissionPreview = new P4U2TrialEditor.UI.MissionPreview();
             this.m_MissionTextBox = new System.Windows.Forms.RichTextBox();
             this.menuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -47,6 +48,7 @@
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
+            this.splitContainer2.Panel1.SuspendLayout();
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
             this.SuspendLayout();
@@ -154,12 +156,27 @@
             this.splitContainer2.Location = new System.Drawing.Point(0, 0);
             this.splitContainer2.Name = "splitContainer2";
             // 
+            // splitContainer2.Panel1
+            // 
+            this.splitContainer2.Panel1.Controls.Add(this.m_MissionPreview);
+            // 
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.m_MissionTextBox);
             this.splitContainer2.Size = new System.Drawing.Size(621, 426);
             this.splitContainer2.SplitterDistance = 369;
             this.splitContainer2.TabIndex = 0;
+            // 
+            // m_MissionPreview
+            // 
+            this.m_MissionPreview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.m_MissionPreview.Font = new System.Drawing.Font("Consolas", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.m_MissionPreview.Location = new System.Drawing.Point(0, 0);
+            this.m_MissionPreview.Name = "m_MissionPreview";
+            this.m_MissionPreview.ReadOnly = true;
+            this.m_MissionPreview.Size = new System.Drawing.Size(369, 426);
+            this.m_MissionPreview.TabIndex = 0;
+            this.m_MissionPreview.Text = "";
             // 
             // m_MissionTextBox
             // 
@@ -173,7 +190,7 @@
             this.m_MissionTextBox.Size = new System.Drawing.Size(248, 426);
             this.m_MissionTextBox.TabIndex = 0;
             this.m_MissionTextBox.Text = resources.GetString("m_MissionTextBox.Text");
-            this.m_MissionTextBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.MissionTextBox_KeyPress);
+            this.m_MissionTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.MissionTextBox_KeyUp);
             // 
             // MainForm
             // 
@@ -194,6 +211,7 @@
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.splitContainer2.Panel1.ResumeLayout(false);
             this.splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).EndInit();
             this.splitContainer2.ResumeLayout(false);
@@ -216,5 +234,6 @@
         private ToolStripMenuItem closeToolStripMenuItem;
         private RichTextBox m_MissionTextBox;
         private UI.MissionTreeView m_MissionView;
+        private UI.MissionPreview m_MissionPreview;
     }
 }

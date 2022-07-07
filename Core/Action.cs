@@ -98,6 +98,17 @@ namespace P4U2TrialEditor.Core
             return ActionUtil.GetCharaActionMsg(id, chara);
         }
 
+        /// <summary>
+        /// Get action input message based on its ID and the supplied character
+        /// </summary>
+        /// <param name="chara">Character</param>
+        /// <returns>Full action message</returns>
+        public string GetInputMessage(CharacterUtil.EChara chara)
+        {
+            string id = (string.IsNullOrEmpty(m_MsgIDOverride)) ? m_MsgID : m_MsgIDOverride;
+            return ActionUtil.GetCharaActionMsg(id + "i", chara);
+        }
+
         public enum Flag
         {
             NONE = 0,

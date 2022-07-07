@@ -56,6 +56,34 @@ namespace P4U2TrialEditor
                 m_OpenFileName, enc);
         }
 
+        /// <summary>
+        /// Update mission preview text box
+        /// </summary>
+        private void UpdatePreview()
+        {
+            Mission m = new Mission();
+            if (m_CurrentMission != null)
+            {
+                m.SetCharacter(m_CurrentMission.GetCharacter());
+            }
+
+            using (MemoryStream ms = new MemoryStream(
+                Encoding.ASCII.GetBytes(m_MissionTextBox.Text)))
+            {
+                using (StreamReaderEx reader = new StreamReaderEx(ms))
+                {
+                    if (m.Deserialize(reader))
+                    {
+                        m_MissionPreview.Load(m);
+                    }
+                    else
+                    {
+                        m_MissionPreview.Text = "Could not parse mission script";
+                    }
+                }
+            }
+        }
+
         #region Open/Close File
 
         /// <summary>
@@ -130,8 +158,9 @@ namespace P4U2TrialEditor
             m_MissionView.SetRootNode(m_OpenFileName!);
             m_MissionView.OpenFile(m_OpenFile!);
     
-            // Clear text editor
+            // Clear text editors
             m_MissionTextBox.Clear();
+            m_MissionPreview.Clear();
 
             // Update window title
             UpdateTitle();
@@ -145,10 +174,12 @@ namespace P4U2TrialEditor
             // Update tree view
             m_MissionView.CloseFile();
 
-            // Disable text editor
+            // Disable text editors
             m_MissionTextBox.Clear();
             m_MissionTextBox.ReadOnly = true;
             m_MissionTextBox.Enabled = false;
+            m_MissionPreview.Clear();
+            m_MissionPreview.Enabled = false;
 
             // Update window title
             UpdateTitle();
@@ -430,11 +461,12 @@ namespace P4U2TrialEditor
 
         #region Mission Text Box
 
-        private void MissionTextBox_KeyPress(object sender, KeyPressEventArgs e)
+        private void MissionTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (Enabled)
             {
                 m_FileDirty = true;
+                UpdatePreview();
             }
         }
 
@@ -484,6 +516,8 @@ namespace P4U2TrialEditor
                 // Allow text box input
                 m_MissionTextBox.ReadOnly = false;
                 m_MissionTextBox.Enabled = true;
+
+                UpdatePreview();
             }
         }
 

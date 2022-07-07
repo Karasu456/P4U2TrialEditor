@@ -21,7 +21,7 @@
             string resId = CharacterUtil.GetCharaResID(chara);
             string msgId = "Cx" + resId + "_" + action;
 
-            if (!ACTIONS.TryGetValue(resId + action, out msg))
+            if (!ACTIONS.TryGetValue(msgId, out msg))
             {
                 // Return message ID if action is invalid
                 return msgId;

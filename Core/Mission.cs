@@ -136,6 +136,11 @@ namespace P4U2TrialEditor.Core
             m_ID = id;
         }
 
+        public List<Action> GetActionList()
+        {
+            return m_ActionList;
+        }
+
         public List<string> GetRawText()
         {
             return m_RawText;
@@ -670,10 +675,6 @@ namespace P4U2TrialEditor.Core
                     continue;
                 }
 
-                // Flags apply to the last action
-                Action actForFlags = act.GetAltActions().Count != 0
-                    ? act.GetAltActions().Last() : act;
-
                 // Alternative action
                 if (tokens[i].StartsWith("|"))
                 {
@@ -694,8 +695,8 @@ namespace P4U2TrialEditor.Core
                     {
                         return false;
                     }
-                    actForFlags.SetFlag(Action.Flag.DAMAGECOUNT);
-                    actForFlags.SetDamageRequirement(dmg);
+                    act.SetFlag(Action.Flag.DAMAGECOUNT);
+                    act.SetDamageRequirement(dmg);
                 }
                 // Hit count requirement
                 else if (tokens[i].StartsWith("h"))
@@ -705,46 +706,46 @@ namespace P4U2TrialEditor.Core
                     {
                         return false;
                     }
-                    actForFlags.SetFlag(Action.Flag.HITCOUNT);
-                    actForFlags.SetHitsRequirement(hits);
+                    act.SetFlag(Action.Flag.HITCOUNT);
+                    act.SetHitsRequirement(hits);
                 }
                 else
                 {
                     switch(tokens[i])
                     {
                         case "i":
-                            actForFlags.SetFlag(Action.Flag.FLAG_I);
+                            act.SetFlag(Action.Flag.FLAG_I);
                             break;
                         case "a":
-                            actForFlags.SetFlag(Action.Flag.FLAG_A);
+                            act.SetFlag(Action.Flag.FLAG_A);
                             break;
                         case "p":
-                            actForFlags.SetFlag(Action.Flag.FLAG_P);
+                            act.SetFlag(Action.Flag.FLAG_P);
                             break;
                         case "c":
-                            actForFlags.SetFlag(Action.Flag.COMMONCHAR);
+                            act.SetFlag(Action.Flag.COMMONCHAR);
                             break;
                         case "iOnly":
-                            actForFlags.SetFlag(Action.Flag.INPUTONLY);
+                            act.SetFlag(Action.Flag.INPUTONLY);
                             break;
                         case "nOnly":
-                            actForFlags.SetFlag(Action.Flag.NAMEONLY);
+                            act.SetFlag(Action.Flag.NAMEONLY);
                             break;
                         case "n2miss":
-                            actForFlags.SetFlag(Action.Flag.N2MISS);
+                            act.SetFlag(Action.Flag.N2MISS);
                             break;
                         case "Special":
-                            actForFlags.SetFlag(Action.Flag.SPECIAL);
+                            act.SetFlag(Action.Flag.SPECIAL);
                             break;
                         case "Nandodemo":
-                            actForFlags.SetFlag(Action.Flag.NANDODEMO);
+                            act.SetFlag(Action.Flag.NANDODEMO);
                             break;
                         case "nostylish":
-                            actForFlags.SetFlag(Action.Flag.NOSTYLISH);
+                            act.SetFlag(Action.Flag.NOSTYLISH);
                             break;
                         // Unknown token
                         default:
-                            return false;
+                            return true;
                     }
                 }
             }
