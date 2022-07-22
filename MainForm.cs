@@ -457,6 +457,22 @@ namespace P4U2TrialEditor
             CloseFile();
         }
 
+        /// <summary>
+        /// ToolStripMenu callback for "Documentation" option
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void documentationToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ProcessStartInfo psInfo = new ProcessStartInfo
+            {
+                FileName = "https://github.com/kiwi515/P4U2TrialEditor/wiki/Script-Structure",
+                UseShellExecute = true
+            };
+
+            Process.Start(psInfo);
+        }
+
         #endregion Menu Tool Strip
 
         #region Mission Text Box
