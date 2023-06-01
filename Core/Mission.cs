@@ -1,8 +1,15 @@
-﻿using System.Diagnostics;
-using P4U2TrialEditor.Util;
+﻿    using System.Data;
+    using System.Diagnostics;
+    using System.Drawing.Drawing2D;
+    using System.Drawing;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using ExcelDataReader;
+    using P4U2TrialEditor.Util;
 
-namespace P4U2TrialEditor.Core
-{
+    namespace P4U2TrialEditor.Core
+    {
     public class Mission
     {
         // Mission character
@@ -226,17 +233,211 @@ namespace P4U2TrialEditor.Core
 
             // Copy script
             m_RawText.Clear();
-            m_RawText.AddRange(reader.GetCache());
+            bool isLesson = false;
+            foreach (string s in reader.GetCache()) 
+            { 
+                if (s.Contains(" p "))
+                {
+                    isLesson= true;
+                }
+            }
+            if (MainForm.isChallengeMode && MainForm.isExcelImport && isLesson == false)
+            {
+                List<string> trialList = reader.GetCache();
+                string trialCount;
+                if (trialList[0].Length > 10)
+                {
+                    trialCount = new(trialList[0][10..]);
+                }
+                else
+                {
+                    trialCount = "1";
+                }
+                int trialNumber = int.Parse(trialCount);
+                if (trialNumber > 30)
+                {
+                    trialNumber = 30;
+                }
+                trialList.RemoveRange(1, trialList.Count - 1);
+                string character = MainForm.currentCharacter;
+
+                /*if (m_Chara.Equals(CharacterUtil.EChara.COMMON))
+                {
+                    Console.WriteLine("Actually works lol");
+                }*/
+
+                if (character != null)
+                {
+                    foreach (string x in ImportExcelTrialAndKeyData(character, trialNumber))
+                    {
+                        trialList.Add(x);
+                    }
+
+                    CleanTrialDataList(trialList, trialNumber);
+
+                    m_RawText.AddRange(trialList);
+                }                
+            }
+            else if (!(MainForm.isExcelImport) || !(MainForm.isChallengeMode))
+            {
+                m_RawText.AddRange(reader.GetCache());
+            }
+
+            //m_RawText.AddRange(reader.GetCache());
 
             return true;
         }
 
-        /// <summary>
-        /// Deserialize mission section of mission script.
-        /// </summary>
-        /// <param name="reader">Stream to script</param>
-        /// <returns>Success</returns>
-        private bool ParseMissionSection(StreamReaderEx reader)
+        private List<string> ImportExcelTrialAndKeyData(string character, int trialNumber)
+        {
+            List<string> returnedData = new List<string>();
+            int row = 0, column = 0;
+
+            int[] numbers = new int[30];
+            int startValue = 25;
+            int increment = 2;
+
+            for (int i = 0; i < 25; i++)
+            {
+                numbers[i] = startValue + (i * increment);
+            }
+            for (int i = 25; i < 30; i++)
+            {
+                numbers[i] = 78 + (i - 25) * 2;
+            }
+
+            row = numbers[trialNumber - 1];
+
+            switch (character)
+            {
+                case "ADACHI":
+                    column = 21;
+                    break;
+                case "AIGIS":
+                    column = 11;
+                    break;
+                case "AKIHIKO":
+                    column = 10;
+                    break;
+                case "CHIE":
+                    column = 4;
+                    break;
+                case "ELIZABETH":
+                    column = 12;
+                    break;
+                case "JUNPEI":
+                    column = 16;
+                    break;
+                case "KANJI":
+                    column = 6;
+                    break;
+                case "KEN":
+                    column = 20;
+                    break;
+                case "LABRYS":
+                    column = 13;
+                    break;
+                case "MARGARET":
+                    column = 23;
+                    break;
+                case "MARIE":
+                    column = 22;
+                    break;
+                case "MINAZUKI":
+                    column = 17;
+                    break;
+                case "MITSURU":
+                    column = 9;
+                    break;
+                case "NAOTO":
+                    column = 8;
+                    break;
+                case "NARUKAMI":
+                    column = 2;
+                    break;
+                case "RISE":
+                    column = 19;
+                    break;
+                case "S_LABRYS":
+                    column = 14;
+                    break;
+                case "SHO":
+                    column = 18;
+                    break;
+                case "TEDDIE":
+                    column = 7;
+                    break;
+                case "YOSUKE":
+                    column = 3;
+                    break;
+                case "YUKARI":
+                    column = 15;
+                    break;
+                case "YUKIKO":
+                    column = 5;
+                    break;
+                case null:
+                    break;
+
+                default:
+                    break;
+            }
+
+            string trialData = MainForm.trialDataArray[row, column];
+            string keyData = MainForm.keyDataArray[row, column];
+
+            string[] trialDataArray = trialData.Split('\n');
+            foreach (string x in trialDataArray)
+            {               
+                returnedData.Add(x);
+            }
+            string[] keyDataArray = keyData.Split('\n');
+            foreach(string x in keyDataArray)
+            {
+                returnedData.Add(x);
+            }
+
+            return returnedData;
+        }
+
+        private List<string> CleanTrialDataList(List<string> dirtyList, int trialNumber)
+        {
+            List<string> cleanedList = new();
+            
+            foreach (string x in dirtyList)
+            {
+                cleanedList.Add(x);
+
+                //Add -MISSION- if missing
+                if (!(x.Contains("-MISSION-")) && x.Equals(dirtyList[0]))
+                {
+                    cleanedList.Insert(0, $"-MISSION-\t{trialNumber}");
+                }
+
+                //Add -LIST- if missing
+                if (!(x.Contains("-LIST-")))
+                {
+                    cleanedList.Insert(cleanedList.Count - 1, $"-LIST- !!NEEDS CORRECTION!!");
+                }
+
+                //Add -KEY- if missing
+                if (!(x.Contains("-KEY-")))
+                {
+                    cleanedList.Insert(cleanedList.Count - 1, $"-KEY- !!NEEDS CORRECTION!!");
+                }                
+            }           
+
+
+            return cleanedList;
+        
+        }
+                
+            /// <summary>
+            /// Deserialize mission section of mission script.
+            /// </summary>
+            /// <param name="reader">Stream to script</param>
+            /// <returns>Success</returns>
+            private bool ParseMissionSection(StreamReaderEx reader)
         {
             if (reader.EndOfStream)
             {
@@ -253,6 +454,7 @@ namespace P4U2TrialEditor.Core
             while (!reader.EndOfStream
                 && reader.PeekLine() != "-LIST-")
             {
+                string character = MainForm.currentCharacter;
                 ParseMissionFlag(reader);
                 reader.Trim();
             }
@@ -987,4 +1189,4 @@ namespace P4U2TrialEditor.Core
             GLOBAL_DEBUG = (1 << 21)
         }
     }
-}
+    }

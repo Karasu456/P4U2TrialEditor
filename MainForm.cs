@@ -3,6 +3,8 @@ using System.Text;
 using P4U2TrialEditor.Core;
 using P4U2TrialEditor.Util;
 using P4U2TrialEditor.UI;
+using ExcelDataReader;
+using System.Data;
 
 namespace P4U2TrialEditor
 {
@@ -20,6 +22,27 @@ namespace P4U2TrialEditor
 
         // Currently selected mission
         private Mission? m_CurrentMission = null;
+
+        public static string excelFilePath = null;
+
+        public static bool excelImport = false;
+        public static bool isExcelImport
+        {
+            get { return excelImport; }
+        }
+
+        public static bool challengeMode = false;
+
+        public static bool isChallengeMode
+        {
+            get { return challengeMode; }
+        }
+
+        public static string currentCharacter = null;
+        public static int rows;
+        public int columns;
+        public static string[,] trialDataArray;
+        public static string[,] keyDataArray;
 
         public MainForm()
         {
@@ -116,6 +139,54 @@ namespace P4U2TrialEditor
         }
 
         /// <summary>
+        /// Set excelImport to true and
+        /// set the excel file path.
+        /// </summary>
+        /// <param name="path">Path to mission file</param>
+        /// <returns></returns>
+        public static void OpenExcelFile(string path)
+        {
+            excelImport = true;
+            excelFilePath= path;
+
+            using (var readExcel = File.Open(MainForm.excelFilePath, FileMode.Open, FileAccess.Read))
+            {
+                // Specify the encoding as UTF-8
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                var reader = ExcelReaderFactory.CreateReader(readExcel, new ExcelReaderConfiguration()
+                {
+                    FallbackEncoding = Encoding.GetEncoding(65001),
+                });
+
+                DataSet result = reader.AsDataSet(new ExcelDataSetConfiguration()
+                {
+                    ConfigureDataTable = (_) => new ExcelDataTableConfiguration() { UseHeaderRow = true }
+                });
+
+                DataTable trialTable = result.Tables[1];
+                DataTable keyTable = result.Tables[2];
+
+                // Get the dimensions of the DataTable
+                int rows = trialTable.Rows.Count;
+                int columns = trialTable.Columns.Count;
+              
+                trialDataArray = new string[rows, columns];
+                keyDataArray = new string[rows, columns];
+
+                // Populate the array with data from the DataTable
+                for (int row = 0; row < rows; row++)
+                {
+                    for (int column = 0; column < columns; column++)
+                    {
+                        trialDataArray[row, column] = trialTable.Rows[row][column].ToString();
+                        keyDataArray[row, column] = keyTable.Rows[row][column].ToString();
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        /// <summary>
         /// Close the currently open file
         /// </summary>
         private void CloseFile()
@@ -154,7 +225,7 @@ namespace P4U2TrialEditor
         /// </summary>
         private void OnOpenFile()
         {
-            // Update tree view
+            // Update tree view            
             m_MissionView.SetRootNode(m_OpenFileName!);
             m_MissionView.OpenFile(m_OpenFile!);
     
@@ -256,6 +327,7 @@ namespace P4U2TrialEditor
                 m_CurrentMission.GetRawText().AddRange(
                     m_MissionTextBox.Text.Split('\n'));
             }
+
         }
 
         #endregion Save File
@@ -374,7 +446,7 @@ namespace P4U2TrialEditor
         {
             // Query file to open
             OpenFileDialog dialog = new OpenFileDialog();
-            dialog.FileName = "Select a trial file";
+            //dialog.FileName = "Select a trial file";
             // Default filter includes the MD5 hashed version
             dialog.Filter = "Trial script (*.txt/*.ang)" +
                 "|*.txt;*.ang;1b1df6db6ea1d4af300ae30c7bbab937*" +
@@ -384,6 +456,28 @@ namespace P4U2TrialEditor
             {
                 OpenFile(dialog.FileName);
             }
+        }
+
+        /// <summary>
+        /// ToolStripMenu callback for "Open" option
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void importFromXCLSToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Query file to open
+            OpenFileDialog dialog = new()
+            {
+                //FileName = "Select an Excel file",
+                Filter = "Excel Files (*.xls;*.xlsx)|*.xls;*.xlsx",
+            };
+
+            if(dialog.ShowDialog() == DialogResult.OK)
+            {
+                OpenExcelFile(dialog.FileName);
+            }
+
+            openToolStripMenuItem_Click(sender, e);
         }
 
         /// <summary>
@@ -399,6 +493,7 @@ namespace P4U2TrialEditor
                 SaveTextBoxData();
                 m_OpenFile.Write(GetSaveFilePath());
                 m_FileDirty = false;
+                Process.Start("G:\\Steam\\steamapps\\common\\P4U2\\P4PC Modpack\\trial\\P4U2-Trial Encryption.bat");
             }
         }
 
@@ -538,5 +633,6 @@ namespace P4U2TrialEditor
         }
 
         #endregion Mission Tree View
+        
     }
 }

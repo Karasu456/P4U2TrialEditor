@@ -363,7 +363,7 @@ namespace P4U2TrialEditor.Core
         /// <param name="reader">Stream to script</param>
         /// <returns>Success</returns>
         private bool ParseTrials(StreamReaderEx reader)
-        {
+        {            
             if (reader.EndOfStream)
             {
                 return false;
@@ -409,6 +409,8 @@ namespace P4U2TrialEditor.Core
                 return false;
             }
 
+            MainForm.challengeMode = true;
+
             // Character for trials
             CharacterUtil.EChara chara
                 = CharacterUtil.GetCharaEnum(tokens[1]);
@@ -420,6 +422,7 @@ namespace P4U2TrialEditor.Core
                 && reader.PeekLine()!.Trim() != ("----End----"))
             {
                 Mission trial = new Mission();
+                MainForm.currentCharacter = chara.ToString();
                 if (!trial.Deserialize(reader))
                 {
                     return false;
